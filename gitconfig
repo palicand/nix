@@ -1,0 +1,39 @@
+[color]
+  diff = auto
+  status = auto
+  branch = auto
+[core]
+	excludesFile = /home/palicand/.gitignore_global
+	editor = vim
+[push]
+	default = simple
+[alias]
+	lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+	fap = fetch -ap
+	co = checkout
+	cob = checkout -b
+	unstage = reset HEAD --
+	ci = commit
+	ciam = commit -am
+	st = status
+	br = branch
+	type = cat-file -t
+	dump = cat-file -p
+	ff = merge --ff
+[rerere]
+	enabled = true
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[user]
+	email = andrej.palicka@gmail.com
+	name = Andrej Palička
+	signingkey = 0x95F118F24B5B361D
+[includeIf "gitdir:~/projects/backbone"]
+    path = ~/projects/backbone/.gitignore
+[includeIf "gitdir:~/backbone"]
+    path = ~/backbone/.gitignore
+[commit]
+	gpgSign = true

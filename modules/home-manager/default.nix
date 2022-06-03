@@ -2,76 +2,6 @@
 
 {
   imports = [ <home-manager/nix-darwin> ];
-  # Auto upgrade nix package and the daemon service.
-  services.nix-daemon.enable = true;
-  nix = {
-    package = pkgs.nix;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-    '';
-  };
-  nixpkgs = {
-    config.allowUnfree = true;
-    config.allowUnsupportedSystem = true;
-  };
-  # Create /etc/bashrc that loads the nix-darwin environment.
-  # programs.zsh.enable = true; # default shell on catalina
-  # programs.fish.enable = true;
-
-  # Used for backwards compatibility, please read the changelog before changing.
-  # $ darwin-rebuild changelog
-  system.stateVersion = 4;
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    enableBashCompletion = true;
-  };
-
-  homebrew = {
-    enable = true;
-    autoUpdate = false;
-    global = {
-      brewfile = true;
-      noLock = true;
-    };
-    brews = [
-      "gnupg2"
-      "pinentry-mac"
-    ];
-
-    taps = [
-      "homebrew/bundle"
-      "homebrew/cask"
-      "homebrew/cask-fonts"
-      "homebrew/cask-versions"
-      "homebrew/core"
-      "homebrew/services"
-    ];
-    casks = [
-      "gpg-suite"
-      "jetbrains-toolbox"
-      "stats"
-      "visual-studio-code"
-      "firefox"
-      "keepassxc"
-      "font-iosevka-nerd-font"
-      "spotify"
-      "mullvadvpn"
-      "iterm2"
-      "kitty"
-    ];
-  };
-
-  users.users.palicand = {
-    name = "palicand";
-    home = "/Users/palicand";
-  };
-
-  environment.systemPackages = with pkgs; [
-    nixpkgs-fmt
-    rnix-lsp
-  ];
-
   home-manager.users.palicand = { pkgs, ... }: {
     # List packages installed in system profile. To search by name, run:
     # $ nix-env -qaP | grep wget
@@ -103,6 +33,9 @@
       cachix
       man-db
       nix-doc
+      cloud-sql-proxy
+      jwt-cli
+      alacritty
     ];
     programs = {
       zsh = {
@@ -125,6 +58,8 @@
                   eval "$(/opt/homebrew/bin/brew shellenv)"
           fi
           SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+          source <(kubectl completion zsh)
+          complete -F __start_kubectl k
         '';
         shellAliases = {
           grep = "rg";
@@ -132,6 +67,7 @@
           iftop = "bandwhich";
           ua = "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y";
           whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";
+          k = "kubectl";
         };
       };
 
@@ -218,5 +154,4 @@
 
 
   };
-
 }
