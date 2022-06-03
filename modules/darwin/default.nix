@@ -1,7 +1,12 @@
 { config, pkgs, ... }:
 
 {
-  imports = [ "../common.nix" ];
+  nixpkgs.config = {
+    allowUnfree = true;
+    allowBroken = true;
+    allowUnsupportedSystem = true;
+  };
+  imports = [ ../common.nix ];
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
   # Create /etc/bashrc that loads the nix-darwin environment.
@@ -26,4 +31,5 @@
     nixpkgs-fmt
     rnix-lsp
   ];
+
 }

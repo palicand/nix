@@ -16,6 +16,7 @@
   };
 
   inputs = {
+    stable.url = "github:nixos/nixpkgs/nixos-21.11";
     devshell.url = "github:numtide/devshell";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
@@ -116,7 +117,7 @@
       );
 
       darwinConfigurations = {
-        mac = mkDarwinConfig {
+        Andrejs-MacBook-Pro = mkDarwinConfig {
           system = "aarch64-darwin";
           extraModules = [
             ./profiles/personal.nix

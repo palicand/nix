@@ -1,14 +1,19 @@
 { config, pkgs, ... }:
 
 {
-  imports = [ <home-manager/nix-darwin> ];
-  home-manager.users.palicand = { pkgs, ... }: {
+  nixpkgs.config = {
+    allowUnfree = true;
+    allowBroken = true;
+  };
+  programs.home-manager = {
+    enable = true;
+    path = "${config.home.homeDirectory}/.nixpkgs/modules/home-manager";
+  };
+  home = with pkgs; {
     # List packages installed in system profile. To search by name, run:
     # $ nix-env -qaP | grep wget
-    nixpkgs.config.allowUnfree = true;
-    nixpkgs.config.allowUnsupportedSystem = true;
 
-    home.packages = with pkgs; [
+    packages = with pkgs; [
       wget
       tmux
       yadm
@@ -37,6 +42,7 @@
       jwt-cli
       alacritty
     ];
+  };
     programs = {
       zsh = {
         localVariables = {
@@ -152,6 +158,4 @@
     # $ darwin-rebuild switch -I darwin-config=$HOME/.config/nixpkgs/darwin/configuration.nix
     # environment.darwinConfig = "$HOME/.config/nixpkgs/darwin/configuration.nix";
 
-
-  };
 }
