@@ -7,6 +7,11 @@
       "https://nix-community.cachix.org"
       "https://palicand.cachix.org"
     ];
+    trusted-substituters = [
+      "https://cache.nixos.org"
+      "https://nix-community.cachix.org"
+      "https://palicand.cachix.org"
+    ];
 
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
@@ -34,7 +39,7 @@
     };
 
     darwin = {
-      url = "github:kclejeune/nix-darwin";
+      url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -117,7 +122,7 @@
       );
 
       darwinConfigurations = {
-        Andrejs-MacBook-Pro = mkDarwinConfig {
+        uber-mac = mkDarwinConfig {
           system = "aarch64-darwin";
           extraModules = [
             ./profiles/personal.nix

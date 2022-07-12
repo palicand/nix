@@ -1,8 +1,11 @@
 { inputs, config, lib, pkgs, ... }: {
   nixpkgs = { config = import ./config.nix; };
   nix = {
+    useDaemon = true;
     package = pkgs.nix;
     extraOptions = ''
+      keep-outputs = true
+      keep-derivations = true
       experimental-features = nix-command flakes
     '';
     trustedUsers = [ "palicand" "root" "@admin" "@wheel" ];
@@ -10,24 +13,23 @@
       automatic = true;
       options = "--delete-older-than 14d";
     };
-
   };
-  registry = {
-    nixpkgs = {
-      from = {
-        id = "nixpkgs";
-        type = "indirect";
-      };
-      flake = inputs.nixpkgs;
-    };
+  # registry = {
+  #   nixpkgs = {
+  #     from = {
+  #       id = "nixpkgs";
+  #       type = "indirect";
+  #     };
+  #     flake = inputs.nixpkgs;
+  #   };
 
-    stable = {
-      from = {
-        id = "stable";
-        type = "indirect";
-      };
-      flake = inputs.stable;
-    };
-  };
+  #   stable = {
+  #     from = {
+  #       id = "stable";
+  #       type = "indirect";
+  #     };
+  #     flake = inputs.stable;
+  #   };
+  # };
 
 }

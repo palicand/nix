@@ -33,6 +33,7 @@
       "iterm2"
       "kitty"
       "alfred"
+      "postman"
     ];
     masApps = { };
   };

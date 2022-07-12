@@ -1,5 +1,5 @@
 { inputs, config, lib, pkgs, ... }: {
-  imports = [ ./primary.nix ];
+  imports = [ ./primary.nix ./nixpkgs.nix ];
 
   programs.zsh = {
     enable = true;
