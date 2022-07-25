@@ -16,6 +16,15 @@
         enable = true;
         plugins = [ "git" "sudo" "common-aliases" ];
       };
+      plugins = [{
+        name = "gradle-completion";
+        src = pkgs.fetchFromGitHub {
+          owner = "gradle";
+          repo = "gradle-completion";
+          rev = "b042038e3d3b30a6440c121268894234c509ca1c";
+          sha256 = "sha256-vr2DjRvs46KBZuYyQD/t+mk0vijCqIK5AeGED80sTXI=";
+        };
+      }];
       initExtra = ''
         if [[ -d /opt/homebrew ]]; then
                 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -34,7 +43,7 @@
         rebuild = "darwin-rebuild switch --flake ~/.nixpkgs";
       };
     };
-    
+
     starship = {
       enable = true;
       package = pkgs.starship;
