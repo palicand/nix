@@ -34,7 +34,7 @@
       rsync
       tree
       yq
-      pgcli
+      # pgcli
       jdk17_headless
       kubernetes
       kubernetes-helm
@@ -45,7 +45,7 @@
       jwt-cli
       openvpn
       wireguard-tools
-      postgresql_11
+      # postgresql_11
     ];
   };
   programs = {

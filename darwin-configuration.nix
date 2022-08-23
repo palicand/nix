@@ -9,7 +9,6 @@
     extraOptions = ''
       experimental-features = nix-command
     '';
-    trustedUsers = [ "palicand" "root" "@admin" "@wheel" ];
     gc = {
       automatic = true;
       options = "--delete-older-than 14d";

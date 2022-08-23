@@ -8,7 +8,6 @@
       keep-derivations = true
       experimental-features = nix-command flakes
     '';
-    trustedUsers = [ "palicand" "root" "@admin" "@wheel" ];
     gc = {
       automatic = true;
       options = "--delete-older-than 14d";
