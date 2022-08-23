@@ -45,6 +45,7 @@
       jwt-cli
       openvpn
       wireguard-tools
+      postgresql_11
     ];
   };
   programs = {
