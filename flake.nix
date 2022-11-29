@@ -5,7 +5,7 @@
   };
 
   inputs = {
-    stable.url = "github:nixos/nixpkgs/nixos-21.11";
+    stable.url = "github:nixos/nixpkgs/nixos-22.05";
     devshell.url = "github:numtide/devshell";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";

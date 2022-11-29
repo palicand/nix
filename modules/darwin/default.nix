@@ -16,10 +16,15 @@
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
+  system.defaults.alf = {
+    globalstate = 2;
+  };
+  documentation.enable = true;
   programs.zsh = {
     enable = true;
     enableCompletion = true;
     enableBashCompletion = true;
+    enableSyntaxHighlighting = true;
   };
 
   users.users.palicand = {
@@ -31,5 +36,4 @@
     nixpkgs-fmt
     rnix-lsp
   ];
-
 }

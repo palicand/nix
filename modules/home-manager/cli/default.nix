@@ -12,19 +12,16 @@
 
       enable = true;
       autocd = true;
+      zplug = {
+        enable = true;
+        plugins = [
+          { name = "zsh-users/zsh-autosuggestions"; }
+        ];
+      };
       oh-my-zsh = {
         enable = true;
-        plugins = [ "git" "sudo" "common-aliases" ];
+        plugins = [ "git" "sudo" "common-aliases" "yarn" "docker" "npm"];
       };
-      plugins = [{
-        name = "gradle-completion";
-        src = pkgs.fetchFromGitHub {
-          owner = "gradle";
-          repo = "gradle-completion";
-          rev = "b042038e3d3b30a6440c121268894234c509ca1c";
-          sha256 = "sha256-vr2DjRvs46KBZuYyQD/t+mk0vijCqIK5AeGED80sTXI=";
-        };
-      }];
       initExtra = ''
         if [[ -d /opt/homebrew ]]; then
                 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -32,6 +29,8 @@
         SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
         source <(kubectl completion zsh)
         complete -F __start_kubectl k
+
+        export PATH=~/.npm-global/bin:$PATH
       '';
       shellAliases = {
         grep = "rg";
@@ -48,12 +47,9 @@
       enable = true;
       package = pkgs.starship;
     };
-    skim = {
-      enable = true;
-    };
 
     fzf = {
-      enable = false;
+      enable = true;
     };
 
     neovim = {

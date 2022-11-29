@@ -1,11 +1,11 @@
 { config, lib, pkgs, ... }: {
   homebrew = {
-    
+
     enable = true;
-    autoUpdate = false;
+    onActivation.autoUpdate = false;
     global = {
       brewfile = true;
-      noLock = true;
+      lockfiles = false;
     };
     brews = [
       "gnupg2"
@@ -34,6 +34,11 @@
       "kitty"
       "alfred"
       "postman"
+      "signal"
+      "1password"
+      "slack"
+      "notion"
+      "github"
     ];
     masApps = { };
   };
