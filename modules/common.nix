@@ -1,10 +1,12 @@
 { inputs, config, lib, pkgs, ... }: {
   imports = [ ./primary.nix ./nixpkgs.nix ];
 
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    enableBashCompletion = true;
+  programs = {
+    zsh = {
+      enable = true;
+      enableCompletion = true;
+      enableBashCompletion = true;
+    };
   };
 
   user = {
@@ -45,7 +47,14 @@
       # ripgrep
 
       # languages
-      python3
+      (python3.withPackages (ps: with ps; with python3Packages; [
+        ipython
+        asyncpg
+        # Uncomment the following lines to make them available in the shell.
+        # pandas
+        # numpy
+        # matplotlib
+      ]))
       ruby
       rustup
     ];
@@ -57,6 +66,7 @@
     # list of acceptable shells in /etc/shells
     shells = with pkgs; [ bash zsh fish ];
   };
+
 
   fonts.fonts = with pkgs; [ jetbrains-mono ];
 }

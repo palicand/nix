@@ -47,7 +47,6 @@
       ripgrep
       bat
       bandwhich
-      google-cloud-sdk
       postgresql
       jq
       openssh
@@ -55,18 +54,25 @@
       tree
       yq
       pgcli
-      jdk17_headless
-      cachix
       man-db
       nix-doc
-      cloud-sql-proxy
       jwt-cli
       openvpn
       wireguard-tools
       nodejs-16_x
+      (yarn.override {
+        nodejs = null;
+      })
       htop
       tig
       ffmpeg
+      cmake
+      stripe-cli
+      awscli2
+      eksctl
+      k9s
+      kubernetes-helm
+      openssl
     ];
   };
 

@@ -18,10 +18,10 @@
         dump = "cat-file -p";
         ff = "merge --ff";
       };
-      signing = {
-        key = "7E2DD79792CEC919";
-        signByDefault = true;
-      };
+      # signing = {
+      #   key = "7E2DD79792CEC919";
+      #   signByDefault = true;
+      # };
       ignores = [
         ".vscode"
         ".mypy_cache"

@@ -57,12 +57,12 @@
         { key = "Delete"; chars = "\\x1b[3~"; }
         { key = "Left"; mods = "Shift"; chars = "\\x1b[1;2D"; }
         { key = "Left"; mods = "Control"; chars = "\\x1b[1;5D"; }
-        { key = "Left"; mods = "Alt"; chars = "\\x1b[1;3D"; }
+        { key = "Left"; mods = "Alt"; chars = "\\x1b\\x62"; }
         { key = "Left"; chars = "\\x1b[D"; mode = "~AppCursor"; }
         { key = "Left"; chars = "\\x1bOD"; mode = "AppCursor"; }
         { key = "Right"; mods = "Shift"; chars = "\\x1b[1;2C"; }
         { key = "Right"; mods = "Control"; chars = "\\x1b[1;5C"; }
-        { key = "Right"; mods = "Alt"; chars = "\\x1b[1;3C"; }
+        { key = "Right"; mods = "Alt"; chars = "\\x1b\\x66"; }
         { key = "Right"; chars = "\\x1b[C"; mode = "~AppCursor"; }
         { key = "Right"; chars = "\\x1bOC"; mode = "AppCursor"; }
         { key = "Up"; mods = "Shift"; chars = "\\x1b[1;2A"; }
