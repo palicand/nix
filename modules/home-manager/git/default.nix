@@ -17,6 +17,7 @@
         type = "cat-file -t";
         dump = "cat-file -p";
         ff = "merge --ff";
+        cleanup = "!git fetch -p && git branch -vv | awk '/: gone]/{print $1}' | xargs git branch -D";
       };
       # signing = {
       #   key = "7E2DD79792CEC919";
@@ -42,6 +43,9 @@
         };
         pull = {
           rebase = true;
+        };
+        push = {
+          autoSetupRemote = true;
         };
       };
       includes = [{

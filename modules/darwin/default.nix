@@ -1,7 +1,6 @@
 { config, pkgs, ... }:
 
 {
-  services.nix-daemon.enable = true;
   nixpkgs.config = {
     allowUnfree = true;
     allowBroken = true;
@@ -16,10 +15,11 @@
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
-  system.defaults.alf = {
-    globalstate = 2;
-  };
-  documentation.enable = true;
+  system.primaryUser = "palicand";
+  documentation.enable = false;
+  documentation.doc.enable = false;
+  documentation.info.enable = false;
+  documentation.man.enable = false;
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -34,6 +34,5 @@
 
   environment.systemPackages = with pkgs; [
     nixpkgs-fmt
-    rnix-lsp
   ];
 }

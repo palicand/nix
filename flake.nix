@@ -1,11 +1,10 @@
 {
   description = "nix system configurations";
 
-  nixConfig = {
-  };
+  nixConfig = { };
 
   inputs = {
-    stable.url = "github:nixos/nixpkgs/nixos-22.05";
+    stable.url = "github:nixos/nixpkgs/nixos-23.05";
     devshell.url = "github:numtide/devshell";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";

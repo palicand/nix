@@ -21,7 +21,6 @@
       "homebrew/services"
     ];
     casks = [
-      "gpg-suite"
       "jetbrains-toolbox"
       "stats"
       "visual-studio-code"

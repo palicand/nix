@@ -28,7 +28,7 @@
   home = with pkgs; {
     # List packages installed in system profile. To search by name, run:
     # $ nix-env -qaP | grep wget
-    stateVersion = "20.09";
+    stateVersion = "23.05";
 
     activation = {
       aliasApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -47,7 +47,8 @@
       ripgrep
       bat
       bandwhich
-      postgresql
+      postgresql_14
+      poetry
       jq
       openssh
       rsync
@@ -55,11 +56,10 @@
       yq
       pgcli
       man-db
-      nix-doc
       jwt-cli
       openvpn
       wireguard-tools
-      nodejs-16_x
+      nodejs
       (yarn.override {
         nodejs = null;
       })
@@ -68,16 +68,14 @@
       ffmpeg
       cmake
       stripe-cli
-      awscli2
-      eksctl
       k9s
       kubernetes-helm
       openssl
+      jdk21_headless
+      (google-cloud-sdk.withExtraComponents [ google-cloud-sdk.components.gke-gcloud-auth-plugin ])
+      terraform
+      krew
+      pdftk
     ];
-  };
-
-  # Use a custom configuration.nix location.
-  # $ darwin-rebuild switch -I darwin-config=$HOME/.config/nixpkgs/darwin/configuration.nix
-  # environment.darwinConfig = "$HOME/.config/nixpkgs/darwin/configuration.nix";
-
+};
 }

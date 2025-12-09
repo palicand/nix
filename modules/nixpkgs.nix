@@ -1,7 +1,6 @@
 { inputs, config, lib, pkgs, ... }: {
   nixpkgs = { config = import ./config.nix; };
   nix = {
-    useDaemon = true;
     package = pkgs.nix;
     extraOptions = ''
       keep-outputs = true

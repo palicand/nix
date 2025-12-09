@@ -47,7 +47,7 @@
       # ripgrep
 
       # languages
-      (python3.withPackages (ps: with ps; with python3Packages; [
+      (python3.withPackages (ps: with ps; [
         ipython
         asyncpg
         # Uncomment the following lines to make them available in the shell.
@@ -67,6 +67,4 @@
     shells = with pkgs; [ bash zsh fish ];
   };
 
-
-  fonts.fonts = with pkgs; [ jetbrains-mono ];
 }

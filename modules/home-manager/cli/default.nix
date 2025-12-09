@@ -20,7 +20,7 @@
       };
       oh-my-zsh = {
         enable = true;
-        plugins = [ "git" "sudo" "common-aliases" "yarn" "docker" "npm"];
+        plugins = [ "git" "sudo" "common-aliases" "yarn" "docker" "npm" "dotenv" ];
       };
       initExtra = ''
         if [[ -d /opt/homebrew ]]; then
@@ -30,7 +30,7 @@
         source <(kubectl completion zsh)
         complete -F __start_kubectl k
 
-        export PATH=~/.npm-global/bin:$PATH
+        export PATH=/etc/profiles/per-user/palicand/bin:~/.npm-global/bin:~/.cargo/bin:$PATH
       '';
       shellAliases = {
         grep = "rg";
@@ -59,7 +59,7 @@
     };
 
     gitui = {
-      enable = true;
+      enable = false;
     };
 
   };
