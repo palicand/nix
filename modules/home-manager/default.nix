@@ -6,10 +6,6 @@
     ./git
     ./alacritty
   ];
-  nixpkgs.config = {
-    allowUnfree = true;
-    allowBroken = true;
-  };
   programs.home-manager = {
     enable = true;
     path = "${config.home.homeDirectory}/.nixpkgs/modules/home-manager";
@@ -58,7 +54,6 @@
       man-db
       jwt-cli
       openvpn
-      wireguard-tools
       nodejs
       (yarn.override {
         nodejs = null;
@@ -74,8 +69,7 @@
       jdk21_headless
       (google-cloud-sdk.withExtraComponents [ google-cloud-sdk.components.gke-gcloud-auth-plugin ])
       terraform
-      krew
-      pdftk
+      claude-code
     ];
 };
 }

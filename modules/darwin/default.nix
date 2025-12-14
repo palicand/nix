@@ -32,6 +32,11 @@
     home = "/Users/palicand";
   };
 
+  # Enable passwordless sudo
+  security.sudo.extraConfig = ''
+    palicand ALL = (ALL) NOPASSWD: ALL
+  '';
+
   environment.systemPackages = with pkgs; [
     nixpkgs-fmt
   ];
