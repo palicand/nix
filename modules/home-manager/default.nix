@@ -27,6 +27,9 @@
     stateVersion = "25.11";
 
     activation = {
+      # Skip the app management permission check (known issue on macOS)
+      checkAppManagementPermission = lib.mkForce "";
+
       aliasApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         if [ -f "$HOME/Applications/Home Manager Applications" ]; then
           ln -sfn $genProfilePath/home-path/Applications "$HOME/Applications/Home Manager Applications"
