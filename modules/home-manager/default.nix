@@ -24,7 +24,7 @@
   home = with pkgs; {
     # List packages installed in system profile. To search by name, run:
     # $ nix-env -qaP | grep wget
-    stateVersion = "23.05";
+    stateVersion = "25.11";
 
     activation = {
       aliasApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
