@@ -13,7 +13,7 @@
         italic = {
           family = "Iosevka Nerd Font";
         };
-        size = 16;
+        size = 20;
         offset = {
           x = 0;
           y = 0;
