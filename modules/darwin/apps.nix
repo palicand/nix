@@ -14,10 +14,8 @@
 
     taps = [
       "homebrew/bundle"
-      "homebrew/cask"
       "homebrew/cask-fonts"
       "homebrew/cask-versions"
-      "homebrew/core"
       "homebrew/services"
     ];
     casks = [
@@ -28,7 +26,7 @@
       "keepassxc"
       "font-iosevka-nerd-font"
       "spotify"
-      "mullvadvpn"
+      "mullvad-vpn"
       "iterm2"
       "kitty"
       "alfred"

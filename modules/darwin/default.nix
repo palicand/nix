@@ -16,6 +16,9 @@
   # $ darwin-rebuild changelog
   system.stateVersion = 6;
   system.primaryUser = "palicand";
+
+  # Keep existing nixbld group ID after stateVersion upgrade
+  ids.gids.nixbld = 30000;
   documentation.enable = false;
   documentation.doc.enable = false;
   documentation.info.enable = false;
