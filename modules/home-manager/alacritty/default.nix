@@ -29,7 +29,7 @@
         };
 
       };
-      key_bindings = [
+      keyboard.bindings = [
         { key = "Paste"; action = "Paste"; }
         { key = "Copy"; action = "Copy"; }
         { key = "L"; mods = "Control"; action = "ClearLogNotice"; }

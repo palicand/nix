@@ -38,6 +38,7 @@
     };
 
     packages = with pkgs; [
+      # Terminal & CLI tools
       alacritty
       wget
       yadm
@@ -74,6 +75,14 @@
       terraform
       claude-code
       cloc
+
+      # GUI Applications (moved from Homebrew)
+      vscode
+      keepassxc
+      # spotify  # has hash mismatch issues, keep in brew
+      iterm2
+      kitty
+      postman
     ];
 };
 }

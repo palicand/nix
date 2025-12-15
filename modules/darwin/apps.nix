@@ -19,23 +19,30 @@
       "homebrew/services"
     ];
     casks = [
+      # Development tools
       "jetbrains-toolbox"
+
+      # System utilities
       "stats"
-      "visual-studio-code"
-      "firefox"
-      "keepassxc"
-      "font-iosevka-nerd-font"
-      "spotify"
-      "mullvad-vpn"
-      "iterm2"
-      "kitty"
       "alfred"
-      "postman"
-      "signal"
+
+      # Security & Privacy
+      "mullvad-vpn"
       "1password"
+
+      # Communication
+      "signal"
       "slack"
-      "notion"
+
+      # Media
+      "spotify"
+
+      # Browsers & Desktop apps
+      "firefox"
       "github"
+
+      # Fonts
+      "font-iosevka-nerd-font"
     ];
     masApps = { };
   };
