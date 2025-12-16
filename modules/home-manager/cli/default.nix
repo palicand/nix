@@ -1,10 +1,16 @@
 { config, pkgs, ... }:
 {
+  home.sessionPath = [
+    "$HOME/.npm-global/bin"
+    "$HOME/.cargo/bin"
+  ];
+
   programs = {
+    gpg.enable = true;
+
     zsh = {
       localVariables = {
         LANG = "en_US.UTF-8";
-        GPG_TTY = "/dev/ttys000";
         CLICOLOR = 1;
         LS_COLORS = "ExFxBxDxCxegedabagacad";
         TERM = "xterm-256color";
@@ -23,14 +29,18 @@
         plugins = [ "git" "sudo" "common-aliases" "yarn" "docker" "npm" "dotenv" ];
       };
       initContent = ''
+        # Homebrew shell environment (macOS)
         if [[ -d /opt/homebrew ]]; then
-                eval "$(/opt/homebrew/bin/brew shellenv)"
+          eval "$(/opt/homebrew/bin/brew shellenv)"
         fi
-        SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+
+        # GPG agent for SSH
+        export GPG_TTY=$(tty)
+        export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+
+        # Kubectl completion
         source <(kubectl completion zsh)
         complete -F __start_kubectl k
-
-        export PATH=/etc/profiles/per-user/palicand/bin:~/.npm-global/bin:~/.cargo/bin:$PATH
       '';
       shellAliases = {
         grep = "rg";

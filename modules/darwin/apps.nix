@@ -21,10 +21,14 @@
     casks = [
       # Development tools
       "jetbrains-toolbox"
+      "lens"
+      "visual-studio-code"
+      "postman"
 
       # System utilities
       "stats"
       "alfred"
+      "keepassxc"
 
       # Security & Privacy
       "mullvad-vpn"

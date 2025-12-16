@@ -45,18 +45,6 @@
     nerd-fonts.iosevka
   ];
 
-  # Configure iTerm2 with similar settings to Alacritty
-  system.defaults.CustomUserPreferences = {
-    "com.googlecode.iterm2" = {
-      # Use Iosevka Nerd Font at size 20
-      "Normal Font" = "IosevkaNerdFont-Regular 20";
-      "Non Ascii Font" = "IosevkaNerdFont-Regular 20";
-
-      # Basic settings
-      "Default Bookmark Guid" = "Default";
-    };
-  };
-
   environment.systemPackages = with pkgs; [
     nixpkgs-fmt
   ];

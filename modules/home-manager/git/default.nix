@@ -49,6 +49,26 @@
         push = {
           autoSetupRemote = true;
         };
+        init = {
+          defaultBranch = "main";
+        };
+        commit = {
+          verbose = true;
+        };
+        diff = {
+          algorithm = "histogram";
+          colorMoved = "default";
+        };
+        merge = {
+          conflictstyle = "zdiff3";
+        };
+        fetch = {
+          prune = true;
+        };
+        rebase = {
+          autoStash = true;
+          autoSquash = true;
+        };
       };
       includes = [{
         contents = {

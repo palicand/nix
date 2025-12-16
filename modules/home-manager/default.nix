@@ -4,7 +4,6 @@
   imports = [
     ./cli
     ./git
-    ./alacritty
   ];
   programs.home-manager = {
     enable = true;
@@ -14,11 +13,75 @@
   programs.tmux = {
     enable = true;
     clock24 = true;
+    mouse = true;
+    terminal = "screen-256color";
+    baseIndex = 1;
+    escapeTime = 0;
+    historyLimit = 50000;
+
     plugins = with pkgs; [
       tmuxPlugins.cpu
       tmuxPlugins.resurrect
+      tmuxPlugins.sensible
+      tmuxPlugins.yank
     ];
 
+    extraConfig = ''
+      # Vim-like pane navigation
+      bind h select-pane -L
+      bind j select-pane -D
+      bind k select-pane -U
+      bind l select-pane -R
+
+      # Better splits
+      bind | split-window -h -c "#{pane_current_path}"
+      bind - split-window -v -c "#{pane_current_path}"
+
+      # Reload config
+      bind r source-file ~/.config/tmux/tmux.conf \; display "Config reloaded!"
+    '';
+  };
+
+  programs.htop = {
+    enable = true;
+    settings = {
+      tree_view = true;
+      show_cpu_frequency = true;
+    };
+  };
+
+  programs.bat = {
+    enable = true;
+    config = {
+      theme = "TwoDark";
+      pager = "less -FR";
+    };
+  };
+
+  programs.ssh = {
+    enable = true;
+    matchBlocks = {
+      "*" = {
+        controlMaster = "auto";
+        controlPersist = "10m";
+        compression = true;
+      };
+    };
+  };
+
+  xdg.configFile = {
+    "k9s/config.yml".text = ''
+      k9s:
+        liveViewAutoRefresh: true
+        refreshRate: 2
+    '';
+
+    "pgcli/config".text = ''
+      [main]
+      multi_line = True
+      vi = True
+      auto_expand = True
+    '';
   };
 
   home = with pkgs; {
@@ -38,19 +101,21 @@
     };
 
     packages = with pkgs; [
+      # Languages/Runtimes
+      (python3.withPackages (ps: with ps; [
+        ipython
+        asyncpg
+      ]))
+      ruby
+
       # Terminal & CLI tools
-      alacritty
       wget
       yadm
-      fzf
-      rustup
       ripgrep
-      bat
       bandwhich
       postgresql_14
       poetry
       jq
-      openssh
       rsync
       tree
       yq
@@ -62,7 +127,6 @@
       (yarn.override {
         nodejs = null;
       })
-      htop
       tig
       ffmpeg
       cmake
@@ -75,14 +139,6 @@
       terraform
       claude-code
       cloc
-
-      # GUI Applications (moved from Homebrew)
-      vscode
-      keepassxc
-      # spotify  # has hash mismatch issues, keep in brew
-      iterm2
-      kitty
-      postman
     ];
 };
 }

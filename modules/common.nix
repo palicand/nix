@@ -1,14 +1,6 @@
 { inputs, config, lib, pkgs, ... }: {
   imports = [ ./primary.nix ./nixpkgs.nix ];
 
-  programs = {
-    zsh = {
-      enable = true;
-      enableCompletion = true;
-      enableBashCompletion = true;
-    };
-  };
-
   user = {
     description = "Andrej Palicka";
     home = "${
@@ -31,32 +23,11 @@
   # environment setup
   environment = {
     systemPackages = with pkgs; [
-      # editors
-      neovim
-
-      # standard toolset
+      # Essential system utilities only
       coreutils-full
       curl
       wget
       git
-      jq
-
-      # helpful shell stuff
-      bat
-      fzf
-      # ripgrep
-
-      # languages
-      (python3.withPackages (ps: with ps; [
-        ipython
-        asyncpg
-        # Uncomment the following lines to make them available in the shell.
-        # pandas
-        # numpy
-        # matplotlib
-      ]))
-      ruby
-      rustup
     ];
     etc = {
       home-manager.source = "${inputs.home-manager}";
