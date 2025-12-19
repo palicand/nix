@@ -29,6 +29,7 @@
       "stats"
       "alfred"
       "keepassxc"
+      "iterm2"
 
       # Security & Privacy
       "mullvad-vpn"

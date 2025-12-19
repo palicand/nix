@@ -4,6 +4,7 @@
   imports = [
     ./cli
     ./git
+    ./fish
   ];
   programs.home-manager = {
     enable = true;
@@ -60,6 +61,7 @@
 
   programs.ssh = {
     enable = true;
+    enableDefaultConfig = false;
     matchBlocks = {
       "*" = {
         controlMaster = "auto";
@@ -105,6 +107,7 @@
       (python3.withPackages (ps: with ps; [
         ipython
         asyncpg
+        requests
       ]))
       ruby
 

@@ -39,6 +39,7 @@
           dump = "cat-file -p";
           ff = "merge --ff";
           cleanup = "!git fetch -p && git branch -vv | awk '/: gone]/{print $1}' | xargs git branch -D";
+          wt = "!f() { base=$(git rev-parse --show-toplevel); parent=$(dirname \"$base\"); repo_name=$(basename \"$base\"); if git rev-parse --verify origin/main >/dev/null 2>&1; then remote_branch=origin/main; else remote_branch=origin/master; fi; worktree_dir=\"$parent/$repo_name-$1\"; git worktree add --no-track -b \"$2\" \"$worktree_dir\" \"$remote_branch\"; echo 'Copying ignored files to new worktree...'; cd \"$base\"; git ls-files --others --ignored --exclude-standard | while read -r file; do if [ -f \"$file\" ]; then target_dir=\"$worktree_dir/$(dirname \"$file\")\"; mkdir -p \"$target_dir\"; cp \"$file\" \"$worktree_dir/$file\"; fi; done; echo \"$worktree_dir\"; }; f";
         };
         rerere = {
           enabled = true;

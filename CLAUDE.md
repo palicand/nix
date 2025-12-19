@@ -71,9 +71,10 @@ darwin-rebuild --list-generations
 
 The `flake.nix` is the entry point that orchestrates the entire configuration:
 
-- **Inputs**: Defines dependencies (nixpkgs unstable, stable 23.05, home-manager, nix-darwin)
+- **Inputs**: Defines dependencies (nixpkgs unstable, home-manager, nix-darwin)
 - **Outputs**: Generates darwin configurations using helper functions `mkDarwinConfig` and `mkHomeConfig`
 - **Darwin Configuration**: `uber-mac` for aarch64-darwin (Apple Silicon)
+- **Simplified**: Removed unused flake inputs (stable nixpkgs, comma, devshell, flake-compat, flake-utils) for faster rebuilds
 
 ### Module System
 
@@ -82,9 +83,8 @@ The repository uses a layered module architecture:
 1. **modules/primary.nix**: Defines `user` and `hm` (home-manager) option aliases, allowing shorthand config like `user.name` instead of `users.users.<name>.name`
 
 2. **modules/common.nix**: Shared configuration imported by both Darwin and home-manager
-   - Base system packages (neovim, git, coreutils, curl, wget, jq, bat, fzf)
-   - Python3 with ipython and asyncpg
-   - User shell configuration (zsh)
+   - Essential system utilities only (coreutils-full, curl, wget, git)
+   - User shell configuration (fish as default)
    - Home-manager bootstrap with global nixpkgs
 
 3. **modules/darwin/default.nix**: Darwin-specific base configuration
@@ -98,15 +98,16 @@ The repository uses a layered module architecture:
    - Brews: gnupg2, pinentry-mac
 
 5. **modules/home-manager/default.nix**: Home-manager user environment
-   - Imports CLI, git, and alacritty configurations
+   - Imports CLI, git, and fish configurations
    - Defines user packages (rust tooling, kubernetes tools, nodejs, terraform, etc.)
-   - Tmux configuration with plugins
+   - Python3 with packages: ipython, asyncpg, requests
+   - Tmux configuration with plugins (cpu, resurrect)
    - macOS application linking activation script
 
 6. **Specialized modules**:
    - `modules/home-manager/cli/default.nix`: Shell configuration (zsh, starship, fzf, neovim)
-   - `modules/home-manager/git/default.nix`: Git configuration
-   - `modules/home-manager/alacritty/default.nix`: Terminal emulator config
+   - `modules/home-manager/git/default.nix`: Git configuration with enhanced worktree workflow
+   - `modules/home-manager/fish/default.nix`: Fish shell configuration (now the default shell)
 
 ### Profile System
 
@@ -119,14 +120,31 @@ Profiles compose modules for specific use cases:
 
 - **User Aliasing**: The `primary.nix` module allows `user.*` and `hm.*` as shortcuts to `users.users.<username>.*` and `home-manager.users.<username>.*`
 - **Input Following**: Both home-manager and nix-darwin follow the same nixpkgs input for consistency
-- **Dual nixpkgs**: Uses both unstable (default) and stable (23.05) channels, accessible via `inputs.nixpkgs` and `inputs.stable`
+- **Single nixpkgs**: Uses nixpkgs unstable channel exclusively for all packages
 - **Platform Abstraction**: `homePrefix` function handles /Users (macOS) vs /home (Linux) paths
 
 ## Common Modifications
 
 ### Adding System Packages
 
-Add to `modules/common.nix` under `environment.systemPackages` for system-wide packages, or to `modules/home-manager/default.nix` under `home.packages` for user-specific packages.
+Add to `modules/common.nix` under `environment.systemPackages` for essential system utilities only, or to `modules/home-manager/default.nix` under `home.packages` for user-specific packages.
+
+### Adding Python Packages
+
+To add Python packages globally:
+1. Edit `modules/home-manager/default.nix`
+2. Find the `python3.withPackages` expression (around line 107)
+3. Add the package name to the list within the `with ps;` block
+4. Run `darwin-rebuild switch --flake ~/.nixpkgs` to apply changes
+
+Example:
+```nix
+(python3.withPackages (ps: with ps; [
+  ipython
+  asyncpg
+  requests  # Added package
+]))
+```
 
 ### Adding Homebrew Apps
 
@@ -149,14 +167,61 @@ The primary user is "palicand" defined in:
 
 ## Important Configuration Details
 
-- **State Version**: home-manager uses "23.05", darwin uses state version 4
+- **State Version**: home-manager uses "23.05", darwin uses state version 6
 - **Garbage Collection**: Automatic, deletes generations older than 14 days
-- **Experimental Features**: nix-command is enabled in darwin-configuration.nix
+- **Experimental Features**: nix-command and flakes enabled
+- **Default Shell**: Fish (configured in `modules/common.nix`)
+- **Alternative Shells**: Zsh is still configured and available
+- **Python Environment**: Python 3.13.9 with ipython, asyncpg, and requests
 - **Shell Aliases**:
   - `rebuild` → `darwin-rebuild switch --flake ~/.nixpkgs`
   - `grep` → `rg` (ripgrep)
   - `cat` → `bat`
   - `k` → `kubectl`
+
+## Git Worktree Workflow
+
+This configuration includes an enhanced git worktree workflow for parallel development:
+
+### `git wt` alias
+
+Creates a new worktree with automatic secret/config copying:
+
+```bash
+git wt <dir-suffix> <branch-name>
+```
+
+**Features:**
+- Creates worktree in parent directory as `<repo-name>-<dir-suffix>`
+- Automatically copies all git-ignored files (`.env`, `.vscode`, etc.) to the new worktree
+- Uses `origin/main` or `origin/master` as the base branch
+- Example: `git wt feature-123 feat/my-feature` creates `backend-platform-feature-123`
+
+### `gwt` function
+
+Wrapper around `git wt` that automatically `cd`s into the new worktree:
+
+```bash
+gwt <dir-suffix> <branch-name>
+```
+
+**Usage Example:**
+```bash
+gwt extension-error BKBN-3828-my-feature
+# Creates worktree and immediately cd's into it
+```
+
+This is particularly useful for:
+- Testing features in isolation with separate environment configs
+- Working on multiple branches simultaneously
+- Quick context switching without stashing changes
+
+### Implementation Notes
+
+- The `git wt` alias is defined in `modules/home-manager/git/default.nix`
+- The `gwt` function is defined in `modules/home-manager/cli/default.nix`
+- **Important**: Git aliases in Nix must be single-line strings, not multiline. Use semicolons and proper escaping.
+- **oh-my-zsh conflict**: The git plugin auto-creates a `gwt` alias from the `git wt` alias. The function includes `unalias gwt` to handle this.
 
 ## Notable Packages
 
@@ -174,3 +239,66 @@ Use `nixpkgs-fmt` (installed in environment.systemPackages) to format Nix files:
 ```bash
 nixpkgs-fmt <file.nix>
 ```
+
+## Common Gotchas and Troubleshooting
+
+### Git Aliases in Nix
+
+When defining git aliases in `modules/home-manager/git/default.nix`:
+- **Must use single-line strings**: Multiline strings with `''` will create invalid gitconfig entries with literal newlines
+- **Escape quotes properly**: Use `\"` for quotes within the alias string
+- **Join with semicolons**: Use `;` to separate shell commands instead of newlines
+- **Example**: `wt = "!f() { cmd1; cmd2; cmd3; }; f";` ✓ NOT `wt = ''...multiline...''` ✗
+
+### oh-my-zsh Plugin Conflicts
+
+The oh-my-zsh git plugin automatically creates aliases for git aliases (e.g., `gwt` from `git wt`):
+- **Problem**: This conflicts when defining functions with the same name
+- **Solution**: Add `unalias <name> 2>/dev/null || true` before function definitions
+- **Location**: `modules/home-manager/cli/default.nix` in `initContent`
+
+### Adding New Files to Flakes
+
+When creating new modules or configuration files:
+- **Must run `git add`**: Nix flakes only see files tracked by git
+- **Error symptom**: "path does not exist" even though file is present
+- **Solution**: `git add <new-file>` before running `darwin-rebuild`
+
+### Switching Default Shell
+
+To change the default shell:
+- **Location**: `modules/common.nix`, set `user.shell = pkgs.<shell>;`
+- **Available shells**: Must be listed in `environment.shells`
+- **Currently configured**: fish (default), zsh (alternative)
+- **Enable in darwin**: Set `programs.<shell>.enable = true` in `modules/darwin/default.nix`
+- **After changing**: Run `darwin-rebuild switch` to apply the change
+
+### Duplicate Option Definitions
+
+When importing multiple modules that configure the same programs:
+- **Problem**: "option is defined multiple times" errors
+- **Common culprits**: starship, fzf, neovim when configured in multiple places
+- **Solution**: Configure shared tools once in `cli/default.nix`, enable integrations in other shells
+- **Example**: starship configured in `cli`, fish uses the same config automatically
+
+### Removing Unused Flake Inputs
+
+To clean up unused flake dependencies and speed up rebuilds:
+1. **Remove from inputs**: Edit `flake.nix` and remove unused input definitions
+2. **Remove specialArgs**: Remove references from `specialArgs` in `mkDarwinConfig` and `mkHomeConfig`
+3. **Remove etc sources**: Remove corresponding entries from `modules/common.nix` in `environment.etc`
+4. **Update flake lock**: Run `nix flake update` to update the lock file (will show removed inputs)
+5. **Rebuild**: Run `darwin-rebuild switch` to apply changes
+
+**Recent cleanup** (2025-12-19):
+- Removed: `stable` (nixos-23.05), `comma`, `devshell`, `flake-compat`, `flake-utils`
+- Benefit: Faster rebuilds, smaller flake.lock, no unnecessary dependency downloads
+
+### Managing Large Package Builds
+
+When updating packages, some large derivations can take 20-30 minutes to build from source:
+- **terraform**: Go modules compilation can be slow
+- **claude-code**: npm dependencies are extensive
+- **Solution**: Be patient, the build is likely still progressing even without output
+- **Check progress**: Use `ps aux | /usr/bin/grep darwin-rebuild` to verify the process is still running
+- **Background option**: Large rebuilds can be run with `run_in_background: true`

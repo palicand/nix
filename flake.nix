@@ -4,18 +4,7 @@
   nixConfig = { };
 
   inputs = {
-    stable.url = "github:nixos/nixpkgs/nixos-23.05";
-    devshell.url = "github:numtide/devshell";
-    flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    comma = {
-      url = "github:nix-community/comma";
-      flake = false;
-    };
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -27,12 +16,11 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, darwin, home-manager, flake-utils, ... }:
+  outputs = inputs@{ self, nixpkgs, darwin, home-manager, ... }:
     let
       inherit (darwin.lib) darwinSystem;
       inherit (nixpkgs.lib) nixosSystem;
       inherit (home-manager.lib) homeManagerConfiguration;
-      inherit (flake-utils.lib) eachDefaultSystem eachSystem;
       inherit (builtins) listToAttrs map;
 
       isDarwin = system: (builtins.elem system nixpkgs.lib.platforms.darwin);
@@ -43,7 +31,6 @@
       mkDarwinConfig =
         { system
         , nixpkgs ? inputs.nixpkgs
-        , stable ? inputs.stable
         , baseModules ? [
             home-manager.darwinModules.home-manager
             ./modules/darwin
@@ -53,7 +40,7 @@
         darwinSystem {
           inherit system;
           modules = baseModules ++ extraModules;
-          specialArgs = { inherit inputs nixpkgs stable; };
+          specialArgs = { inherit inputs nixpkgs; };
         };
 
       # generate a home-manager configuration usable on any unix system
@@ -62,13 +49,12 @@
         { username
         , system ? "x86_64-linux"
         , nixpkgs ? inputs.nixpkgs
-        , stable ? inputs.stable
         , baseModules ? [
             ./modules/home-manager
             {
               home.sessionVariables = {
                 NIX_PATH =
-                  "nixpkgs=${nixpkgs}:stable=${stable}\${NIX_PATH:+:}$NIX_PATH";
+                  "nixpkgs=${nixpkgs}\${NIX_PATH:+:}$NIX_PATH";
               };
             }
           ]
@@ -77,7 +63,7 @@
         homeManagerConfiguration rec {
           inherit system username;
           homeDirectory = "${homePrefix system}/${username}";
-          extraSpecialArgs = { inherit inputs nixpkgs stable; };
+          extraSpecialArgs = { inherit inputs nixpkgs; };
           configuration = {
             imports = baseModules ++ extraModules;
           };
@@ -118,29 +104,5 @@
       nixosConfigurations = { };
 
       homeConfigurations = { };
-    } //
-    # add a devShell to this flake
-    eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ inputs.devshell.overlay ];
-        };
-        pyEnv = (pkgs.python3.withPackages
-          (ps: with ps; [ black pylint typer colorama shellingham ]));
-        sysdo = pkgs.writeShellScriptBin "sysdo" ''
-          cd $PRJ_ROOT && ${pyEnv}/bin/python3 bin/do.py $@
-        '';
-      in
-      {
-        devShell = pkgs.devshell.mkShell {
-          packages = with pkgs; [ nixfmt pyEnv rnix-lsp stylua treefmt ];
-          commands = [{
-            name = "sysdo";
-            package = sysdo;
-            category = "utilities";
-            help = "perform actions on this repository";
-          }];
-        };
-      });
+    };
 }

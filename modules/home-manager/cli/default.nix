@@ -3,6 +3,7 @@
   home.sessionPath = [
     "$HOME/.npm-global/bin"
     "$HOME/.cargo/bin"
+    "$HOME/.antigravity/antigravity/bin"
   ];
 
   programs = {
@@ -41,6 +42,24 @@
         # Kubectl completion
         source <(kubectl completion zsh)
         complete -F __start_kubectl k
+
+        # Git worktree wrapper - creates worktree and cds into it
+        # Usage: gwt <dir-suffix> <branch-name>
+        # Example: gwt feature-123 feat/my-feature
+        # Unalias gwt if oh-my-zsh git plugin created it
+        unalias gwt 2>/dev/null || true
+        gwt() {
+          if [[ $# -ne 2 ]]; then
+            echo "Usage: gwt <dir-suffix> <branch-name>"
+            echo "Example: gwt feature-123 feat/my-feature"
+            return 1
+          fi
+
+          local worktree_dir=$(git wt "$1" "$2" | tail -n 1)
+          if [[ -d "$worktree_dir" ]]; then
+            cd "$worktree_dir"
+          fi
+        }
       '';
       shellAliases = {
         grep = "rg";
@@ -56,10 +75,14 @@
     starship = {
       enable = true;
       package = pkgs.starship;
+      # To use a preset, run: starship preset <name> -o ~/.config/starship.toml
+      # Available presets: bracketed-segments, gruvbox-rainbow, jetpack, nerd-font-symbols,
+      #                    no-runtime-versions, pastel-powerline, plain-text-symbols, pure-preset, tokyo-night
     };
 
     fzf = {
       enable = true;
+      enableFishIntegration = true;
     };
 
     neovim = {

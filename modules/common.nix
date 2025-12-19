@@ -6,7 +6,7 @@
     home = "${
         if pkgs.stdenvNoCC.isDarwin then "/Users" else "/home"
       }/${config.user.name}";
-    shell = pkgs.zsh;
+    shell = pkgs.fish;
   };
 
   # bootstrap home manager using system config
@@ -32,7 +32,6 @@
     etc = {
       home-manager.source = "${inputs.home-manager}";
       nixpkgs.source = "${pkgs.path}";
-      stable.source = "${inputs.stable}";
     };
     # list of acceptable shells in /etc/shells
     shells = with pkgs; [ bash zsh fish ];
