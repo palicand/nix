@@ -68,7 +68,8 @@
         ua = "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y";
         whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";
         k = "kubectl";
-        rebuild = "darwin-rebuild switch --flake ~/.nixpkgs";
+        rebuild = "sudo darwin-rebuild switch --flake ~/.nixpkgs";
+        update-all = "nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs";
         python = "python-wrapper";
         python3 = "python3-wrapper";
       };

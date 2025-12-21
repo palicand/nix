@@ -12,17 +12,21 @@ This is a personal Nix configuration repository for managing macOS (nix-darwin) 
 
 ```bash
 # Rebuild and switch macOS configuration (primary command)
-darwin-rebuild switch --flake ~/.nixpkgs
+# NOTE: Requires sudo for system activation
+sudo darwin-rebuild switch --flake ~/.nixpkgs
 
-# Or use the shell alias
+# Or use the shell alias (already includes sudo)
 rebuild
 
-# Build without switching (for testing)
+# Build without switching (for testing - does NOT require sudo)
 darwin-rebuild build --flake ~/.nixpkgs
 
 # Check what would change without applying
 darwin-rebuild build --flake ~/.nixpkgs
 nix store diff-closures /run/current-system ./result
+
+# Update all flakes and rebuild (combines flake update + rebuild)
+update-all
 ```
 
 ### Flake Management
@@ -182,10 +186,15 @@ The primary user is "palicand" defined in:
 - **Alternative Shells**: Zsh is still configured and available
 - **Python Environment**: Python 3.13.9 with ipython, asyncpg, and requests
 - **Shell Aliases**:
-  - `rebuild` → `darwin-rebuild switch --flake ~/.nixpkgs`
+  - `rebuild` → `sudo darwin-rebuild switch --flake ~/.nixpkgs` (requires sudo for system activation)
+  - `update-all` → `nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs` (updates all flakes and rebuilds)
   - `grep` → `rg` (ripgrep)
   - `cat` → `bat`
   - `k` → `kubectl`
+- **Fish Shell Configuration**:
+  - Welcome message disabled via `set -g fish_greeting` in `modules/home-manager/fish/default.nix`
+  - Tab completion paths configured for Homebrew (`/opt/homebrew/share/fish/vendor_completions.d`) and Nix packages
+- **Homebrew on Activation**: `onActivation.upgrade = true` in `modules/darwin/apps.nix` - automatically upgrades all Homebrew packages when running `darwin-rebuild switch`
 
 ## Git Worktree Workflow
 
@@ -249,6 +258,25 @@ nixpkgs-fmt <file.nix>
 ```
 
 ## Common Gotchas and Troubleshooting
+
+### Darwin Rebuild Requires Sudo
+
+**Important**: `darwin-rebuild switch` requires sudo for system activation as of recent nix-darwin versions.
+
+**Symptoms**:
+```
+/run/current-system/sw/bin/darwin-rebuild: system activation must now be run as root
+```
+
+**Solution**:
+Always run `darwin-rebuild switch` with sudo:
+```bash
+sudo darwin-rebuild switch --flake ~/.nixpkgs
+```
+
+**Note**: The shell aliases `rebuild` and `update-all` already include sudo, so you can use them directly without prefixing sudo.
+
+**Exception**: `darwin-rebuild build` (without switch) does NOT require sudo since it only builds without activating the system.
 
 ### Git Aliases in Nix
 
@@ -352,3 +380,79 @@ python3.13 -c "import requests"  # Works fine
 - Wrapper script: Shell script that `exec`s `python3.13` ✅ Works everywhere
 
 **When adding new Python packages**: Update both the `withPackages` list AND the wrapper scripts to keep them in sync (see "Adding Python Packages" section).
+
+### Homebrew Deprecated Taps
+
+**Problem**: Homebrew deprecated `homebrew/cask-fonts` and `homebrew/cask-versions` taps (merged into main `homebrew/cask` tap). If these taps are listed in your Nix configuration, `brew update` will fail with errors like:
+```
+Error: homebrew/homebrew-cask-versions does not exist! Run `brew untap homebrew/homebrew-cask-versions` to remove it.
+Error: homebrew/homebrew-cask-fonts does not exist! Run `brew untap homebrew/homebrew-cask-fonts` to remove it.
+```
+
+**Root cause**:
+1. Nix-darwin manages Homebrew taps via `modules/darwin/apps.nix` in the `homebrew.taps` list
+2. The deprecated taps were included in the configuration
+3. Homebrew can't untap them if casks are still installed from those taps (e.g., font-iosevka-nerd-font)
+
+**Solution** (2025-12-21):
+1. **Migrate installed casks**: If you have fonts or versioned casks installed from the old taps:
+   ```bash
+   # Reinstall to migrate from old tap to new location
+   brew reinstall --cask font-iosevka-nerd-font
+   ```
+
+2. **Force untap if needed**: If Homebrew still refuses to untap:
+   ```bash
+   brew untap --force homebrew/cask-fonts
+   brew untap --force homebrew/cask-versions
+   ```
+
+3. **Remove from Nix config**: Edit `modules/darwin/apps.nix` and remove the deprecated taps from `homebrew.taps`:
+   ```nix
+   taps = [
+     "homebrew/bundle"
+     "homebrew/services"
+     # Removed: "homebrew/cask-fonts" (deprecated)
+     # Removed: "homebrew/cask-versions" (deprecated)
+   ];
+   ```
+
+4. **Rebuild**: Run `darwin-rebuild switch --flake ~/.nixpkgs` to apply changes
+
+**Current supported taps**:
+- `homebrew/bundle` - For Brewfile support
+- `homebrew/services` - For service management
+
+**Note**: Fonts and versioned casks are now available directly through `homebrew/cask` without needing separate taps.
+
+### Fish Shell Completions
+
+**Issue**: Tab completion may not work for some commands (brew, gradle, etc.) in Fish shell.
+
+**Root cause**: Fish needs to know where to find completion files. By default, it may not check all relevant directories where Homebrew and Nix packages install their completions.
+
+**Solution** (2025-12-21):
+Configure Fish completion paths in `modules/home-manager/fish/default.nix`:
+
+```fish
+# Add Homebrew completion paths
+if test -d /opt/homebrew/share/fish/vendor_completions.d
+  contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
+  or set -gp fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
+end
+
+# Add additional completion paths for Nix packages
+if test -d ~/.nix-profile/share/fish/vendor_completions.d
+  contains ~/.nix-profile/share/fish/vendor_completions.d $fish_complete_path
+  or set -gp fish_complete_path ~/.nix-profile/share/fish/vendor_completions.d
+end
+```
+
+This is configured in the `interactiveShellInit` section of the Fish configuration.
+
+**Locations to check**:
+- Homebrew completions: `/opt/homebrew/share/fish/vendor_completions.d/`
+- Nix profile completions: `~/.nix-profile/share/fish/vendor_completions.d/`
+- User completions: `~/.config/fish/completions/`
+
+**Note**: Don't install completion packages via Homebrew (like `gradle-completion`) when the tool is already vendored or managed by Nix - let Fish discover completions from the configured paths instead.

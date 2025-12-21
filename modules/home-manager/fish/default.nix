@@ -16,12 +16,16 @@
         ua = "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y";
         whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";
         k = "kubectl";
-        rebuild = "darwin-rebuild switch --flake ~/.nixpkgs";
+        rebuild = "sudo darwin-rebuild switch --flake ~/.nixpkgs";
+        update-all = "nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs";
         python = "python-wrapper";
         python3 = "python3-wrapper";
       };
 
       shellInit = ''
+        # Disable fish welcome message
+        set -g fish_greeting
+
         # Environment variables
         set -gx LANG en_US.UTF-8
         set -gx CLICOLOR 1
@@ -41,6 +45,18 @@
       interactiveShellInit = ''
         # Kubectl completion
         kubectl completion fish | source
+
+        # Add Homebrew completion paths
+        if test -d /opt/homebrew/share/fish/vendor_completions.d
+          contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
+          or set -gp fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
+        end
+
+        # Add additional completion paths for Nix packages
+        if test -d ~/.nix-profile/share/fish/vendor_completions.d
+          contains ~/.nix-profile/share/fish/vendor_completions.d $fish_complete_path
+          or set -gp fish_complete_path ~/.nix-profile/share/fish/vendor_completions.d
+        end
 
         # Git worktree wrapper - creates worktree and cds into it
         # Usage: gwt <dir-suffix> <branch-name>

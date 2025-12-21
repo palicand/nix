@@ -3,6 +3,7 @@
 
     enable = true;
     onActivation.autoUpdate = false;
+    onActivation.upgrade = true;
     global = {
       brewfile = true;
       lockfiles = false;
@@ -14,15 +15,12 @@
 
     taps = [
       "homebrew/bundle"
-      "homebrew/cask-fonts"
-      "homebrew/cask-versions"
       "homebrew/services"
     ];
     casks = [
       # Development tools
       "jetbrains-toolbox"
       "lens"
-      "visual-studio-code"
       "postman"
 
       # System utilities
