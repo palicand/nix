@@ -17,6 +17,8 @@
         whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";
         k = "kubectl";
         rebuild = "darwin-rebuild switch --flake ~/.nixpkgs";
+        python = "python-wrapper";
+        python3 = "python3-wrapper";
       };
 
       shellInit = ''

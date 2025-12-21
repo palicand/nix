@@ -135,7 +135,8 @@ To add Python packages globally:
 1. Edit `modules/home-manager/default.nix`
 2. Find the `python3.withPackages` expression (around line 107)
 3. Add the package name to the list within the `with ps;` block
-4. Run `darwin-rebuild switch --flake ~/.nixpkgs` to apply changes
+4. **IMPORTANT**: Also add it to the wrapper scripts (lines 114-119) to keep them in sync
+5. Run `darwin-rebuild switch --flake ~/.nixpkgs` to apply changes
 
 Example:
 ```nix
@@ -144,7 +145,14 @@ Example:
   asyncpg
   requests  # Added package
 ]))
+
+# Also update the wrapper scripts:
+(pkgs.writeShellScriptBin "python3-wrapper" ''
+  exec ${pkgs.python3.withPackages (ps: with ps; [ ipython asyncpg requests ])}/bin/python3.13 "$@"
+'')
 ```
+
+**Why wrapper scripts are needed**: The `python3` symlink in Nix Python environments has a known issue where it doesn't properly initialize `sys.path`, causing it to use the base Python libraries instead of the environment with your installed packages. The `python3.13` binary works correctly, so we use wrapper scripts that call it directly. Shell aliases (`python3` → `python3-wrapper`) make this transparent.
 
 ### Adding Homebrew Apps
 
@@ -267,11 +275,25 @@ When creating new modules or configuration files:
 ### Switching Default Shell
 
 To change the default shell:
-- **Location**: `modules/common.nix`, set `user.shell = pkgs.<shell>;`
-- **Available shells**: Must be listed in `environment.shells`
-- **Currently configured**: fish (default), zsh (alternative)
-- **Enable in darwin**: Set `programs.<shell>.enable = true` in `modules/darwin/default.nix`
-- **After changing**: Run `darwin-rebuild switch` to apply the change
+1. **In Nix configuration**:
+   - Edit `modules/common.nix`, set `user.shell = pkgs.<shell>;`
+   - Enable in darwin: Set `programs.<shell>.enable = true` in `modules/darwin/default.nix`
+   - Run `darwin-rebuild switch --flake ~/.nixpkgs`
+
+2. **In macOS (for terminal windows)**:
+   - The shell must be listed in `/etc/shells` (managed by nix-darwin)
+   - Run: `chsh -s /run/current-system/sw/bin/<shell>`
+   - Example: `chsh -s /run/current-system/sw/bin/fish`
+   - **Important**: Use the `/run/current-system/sw/bin/` path, not the user profile path
+   - Enter your password when prompted
+   - Close and reopen terminal windows for the change to take effect
+
+**Current configuration**:
+- Fish (default in Nix config)
+- Zsh (alternative, still available)
+- Both enabled in `modules/darwin/default.nix`
+
+**Common error**: `chsh: non-standard shell` means the shell path isn't in `/etc/shells`. Use the system path (`/run/current-system/sw/bin/fish`) which is automatically added by nix-darwin.
 
 ### Duplicate Option Definitions
 
@@ -302,3 +324,31 @@ When updating packages, some large derivations can take 20-30 minutes to build f
 - **Solution**: Be patient, the build is likely still progressing even without output
 - **Check progress**: Use `ps aux | /usr/bin/grep darwin-rebuild` to verify the process is still running
 - **Background option**: Large rebuilds can be run with `run_in_background: true`
+
+### Python3 Symlink Issue
+
+**Problem**: The `python3` command doesn't find installed packages (like `requests`, `ipython`), but `python3.13` works correctly.
+
+**Root cause**: The `python3` symlink in Nix Python environments doesn't properly initialize `sys.path`. When executed, it uses the base Python's site-packages instead of the environment with your installed packages.
+
+**Symptoms**:
+```bash
+python3 -c "import requests"  # ModuleNotFoundError
+python3.13 -c "import requests"  # Works fine
+```
+
+**Solution implemented** (2025-12-19):
+1. Created wrapper scripts in `modules/home-manager/default.nix`:
+   - `python3-wrapper` - Executes `python3.13` with correct environment
+   - `python-wrapper` - Same for `python` command
+2. Added shell aliases in both Fish and Zsh configurations:
+   - `python` → `python-wrapper`
+   - `python3` → `python3-wrapper`
+3. Result: `python3` command now works correctly in interactive shells
+
+**Technical details**:
+- Direct execution: `/nix/store/.../python3-3.13.9-env/bin/python3.13` ✅ Works
+- Symlink execution: `/nix/store/.../python3-3.13.9-env/bin/python3` ❌ Broken `sys.path`
+- Wrapper script: Shell script that `exec`s `python3.13` ✅ Works everywhere
+
+**When adding new Python packages**: Update both the `withPackages` list AND the wrapper scripts to keep them in sync (see "Adding Python Packages" section).

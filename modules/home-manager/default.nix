@@ -109,6 +109,15 @@
         asyncpg
         requests
       ]))
+
+      # Python3 wrapper to fix symlink issue
+      (pkgs.writeShellScriptBin "python3-wrapper" ''
+        exec ${pkgs.python3.withPackages (ps: with ps; [ ipython asyncpg requests ])}/bin/python3.13 "$@"
+      '')
+      (pkgs.writeShellScriptBin "python-wrapper" ''
+        exec ${pkgs.python3.withPackages (ps: with ps; [ ipython asyncpg requests ])}/bin/python3.13 "$@"
+      '')
+
       ruby
 
       # Terminal & CLI tools
