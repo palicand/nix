@@ -9,6 +9,11 @@
     '';
     gc = {
       automatic = true;
+      options = "--delete-older-than 14d";
+      interval = {
+        Hour = 13;
+        Minute = 30;
+      };
     };
   };
   # registry = {

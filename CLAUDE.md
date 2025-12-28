@@ -179,8 +179,8 @@ The primary user is "palicand" defined in:
 
 ## Important Configuration Details
 
-- **State Version**: home-manager uses "23.05", darwin uses state version 6
-- **Garbage Collection**: Automatic, deletes generations older than 14 days
+- **State Version**: home-manager uses "25.11", darwin uses state version 6
+- **Garbage Collection**: Automatic, runs daily at 1:30 PM, deletes generations older than 14 days
 - **Experimental Features**: nix-command and flakes enabled
 - **Default Shell**: Fish (configured in `modules/common.nix`)
 - **Alternative Shells**: Zsh is still configured and available
@@ -190,10 +190,15 @@ The primary user is "palicand" defined in:
   - `update-all` → `nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs` (updates all flakes and rebuilds)
   - `grep` → `rg` (ripgrep)
   - `cat` → `bat`
+  - `ls` → `ls --color=auto` (GNU ls with colors)
+  - `ll` → `ls -lah --color=auto` (long listing with colors)
+  - `cp` → `cp --reflink=auto` (use copy-on-write when possible)
   - `k` → `kubectl`
 - **Fish Shell Configuration**:
   - Welcome message disabled via `set -g fish_greeting` in `modules/home-manager/fish/default.nix`
-  - Tab completion paths configured for Homebrew (`/opt/homebrew/share/fish/vendor_completions.d`) and Nix packages
+  - Tab completion paths fixed via `conf.d/zzz_completion_paths.fish` - adds Fish built-ins (1000+ commands) and Homebrew paths that home-manager doesn't include by default
+  - Atuin shell history integration for smart, frequency-based command search
+- **GUI App Environment**: `launchd.user.envVariables.PATH` configured to include Homebrew and Nix paths so GUI apps (like Lens) can find command-line tools
 - **Homebrew on Activation**: `onActivation.upgrade = true` in `modules/darwin/apps.nix` - automatically upgrades all Homebrew packages when running `darwin-rebuild switch`
 
 ## Git Worktree Workflow
@@ -210,7 +215,9 @@ git wt <dir-suffix> <branch-name>
 
 **Features:**
 - Creates worktree in parent directory as `<repo-name>-<dir-suffix>`
-- Automatically copies all git-ignored files (`.env`, `.vscode`, etc.) to the new worktree
+- Automatically copies relevant git-ignored config files (`.env`, `.vscode`, `.idea`, `.gradle`, `.properties`, `.yaml`, `.yml`, `.json`) to the new worktree
+- Uses `rsync` with `--info=progress2` to show overall progress (percentage, speed, ETA) when copying files
+- Shows file count before copying and completion message after
 - Uses `origin/main` or `origin/master` as the base branch
 - Example: `git wt feature-123 feat/my-feature` creates `backend-platform-feature-123`
 
@@ -236,18 +243,21 @@ This is particularly useful for:
 ### Implementation Notes
 
 - The `git wt` alias is defined in `modules/home-manager/git/default.nix`
-- The `gwt` function is defined in `modules/home-manager/cli/default.nix`
+- The `gwt` function is defined in `modules/home-manager/cli/default.nix` (Zsh) and `modules/home-manager/fish/default.nix` (Fish)
 - **Important**: Git aliases in Nix must be single-line strings, not multiline. Use semicolons and proper escaping.
-- **oh-my-zsh conflict**: The git plugin auto-creates a `gwt` alias from the `git wt` alias. The function includes `unalias gwt` to handle this.
+- **oh-my-zsh conflict**: The git plugin auto-creates a `gwt` alias from the `git wt` alias. The Zsh function includes `unalias gwt` to handle this.
+- **Performance**: Uses `rsync` instead of `cp` for faster copying with progress display, especially useful for projects with many config files
 
 ## Notable Packages
 
 - **Development**: rustup, nodejs, yarn, jdk21, poetry, cmake
-- **Cloud/DevOps**: google-cloud-sdk (with GKE auth), kubernetes-helm, k9s, terraform, stripe-cli
+- **Python Tools**: uv (fast package installer), ipython, asyncpg, requests
+- **Cloud/DevOps**: google-cloud-sdk (with GKE auth plugin), kubernetes-helm, k9s, terraform, stripe-cli
 - **Database**: postgresql_14, pgcli
 - **CLI Tools**: ripgrep, bat, fzf, jq, yq, htop, tree, tig, ffmpeg, jwt-cli
-- **Terminal**: alacritty, tmux (with cpu and resurrect plugins)
+- **Terminal**: tmux (with cpu, resurrect, sensible, yank plugins)
 - **AI**: claude-code
+- **GUI Apps** (Homebrew): JetBrains Toolbox, Lens, Postman, VS Code, Firefox, Spotify, Signal, Slack, Stats, Alfred, KeePassXC, iTerm2, iter.ai, CrossOver, BetterDisplay, Mullvad VPN, 1Password, GitHub Desktop, Iosevka Nerd Font
 
 ## Nix Formatting
 
@@ -427,32 +437,122 @@ Error: homebrew/homebrew-cask-fonts does not exist! Run `brew untap homebrew/hom
 
 ### Fish Shell Completions
 
-**Issue**: Tab completion may not work for some commands (brew, gradle, etc.) in Fish shell.
+**Issue**: Tab completions don't work for some commands (brew, gradle, gradlew) in Fish shell.
 
-**Root cause**: Fish needs to know where to find completion files. By default, it may not check all relevant directories where Homebrew and Nix packages install their completions.
+**Root Cause** (2025-12-28):
 
-**Solution** (2025-12-21):
-Configure Fish completion paths in `modules/home-manager/fish/default.nix`:
+**Generated completions shadow real ones**:
+- home-manager's `generateCompletions` option (default: enabled) creates simple completions from man pages
+- Fish's `fish_update_completions` command also generates a cache in `~/.cache/fish/generated_completions/`
+- Generated completions are basic `complete -c` commands without helper functions
+- Real completion files (like brew.fish, gradle.fish) define helper functions that are required for completions to work
+- Generated completions appear early in `fish_complete_path`, shadowing the real ones
+- Fish loads the generated file and stops → helper functions never get defined → completions fail
 
-```fish
-# Add Homebrew completion paths
-if test -d /opt/homebrew/share/fish/vendor_completions.d
-  contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
-  or set -gp fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
-end
+**Solution** (2025-12-28):
 
-# Add additional completion paths for Nix packages
-if test -d ~/.nix-profile/share/fish/vendor_completions.d
-  contains ~/.nix-profile/share/fish/vendor_completions.d $fish_complete_path
-  or set -gp fish_complete_path ~/.nix-profile/share/fish/vendor_completions.d
-end
+**Step 1**: Disable generated completions in `modules/home-manager/fish/default.nix`:
+```nix
+programs.fish = {
+  enable = true;
+  generateCompletions = false;  # Disable - generated completions shadow real ones with helper functions
+  # ...
+};
 ```
 
-This is configured in the `interactiveShellInit` section of the Fish configuration.
+**Step 2**: Add completion paths in `modules/home-manager/default.nix` with correct priority:
+```nix
+"fish/conf.d/zzz_completion_paths.fish".text = ''
+  # Add Fish's built-in completions directory (1000+ commands: git, npm, etc.)
+  set -l builtin_completions $__fish_data_dir/completions
+  if test -d $builtin_completions; and not contains $builtin_completions $fish_complete_path
+    set -ga fish_complete_path $builtin_completions
+  end
 
-**Locations to check**:
-- Homebrew completions: `/opt/homebrew/share/fish/vendor_completions.d/`
-- Nix profile completions: `~/.nix-profile/share/fish/vendor_completions.d/`
-- User completions: `~/.config/fish/completions/`
+  # PREPEND Homebrew completions so they take priority over Fish's placeholder files
+  # (Fish's built-in brew.fish is just a comment pointing to Homebrew's upstream)
+  if test -d /opt/homebrew/share/fish/vendor_completions.d
+    and not contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
+    set -p fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
+  end
+'';
 
-**Note**: Don't install completion packages via Homebrew (like `gradle-completion`) when the tool is already vendored or managed by Nix - let Fish discover completions from the configured paths instead.
+# gradlew.fish - Load gradle.fish which provides completions for both gradle and gradlew
+"fish/completions/gradlew.fish".text = ''
+  # gradle.fish defines completions for both 'gradle' and 'gradlew' commands
+  # But Fish's lazy loading doesn't know this - it only looks for gradlew.fish when you type gradlew
+  # So we explicitly source gradle.fish to make both sets of completions available
+  set -l gradle_completion $__fish_data_dir/completions/gradle.fish
+  test -f $gradle_completion; and source $gradle_completion
+'';
+```
+
+**Step 3**: Clear Fish's generated cache (one-time):
+```bash
+rm -rf ~/.cache/fish/generated_completions/
+```
+
+**Important**: Do NOT run `fish_update_completions` - it regenerates the cache and breaks completions again.
+
+**What this fixes**:
+- ✅ Homebrew tools (brew, etc.) - real completions loaded instead of placeholders
+- ✅ Git, npm, kubectl, terraform - Fish's lazy loading works correctly
+- ✅ Gradle - Fish's gradle.fish loads with helper functions
+- ✅ Gradlew - Custom wrapper sources gradle.fish when gradlew is used
+
+**Why gradlew needs special handling**:
+- Fish's builtin `gradlew.fish` contains only: `complete -c gradlew -w gradle`
+- This wrapping syntax requires gradle completions to already be loaded
+- Fish's lazy loading doesn't know that `gradle.fish` provides `gradlew` completions
+- When you type `gradlew <tab>`, Fish looks for `gradlew.fish` but doesn't load `gradle.fish`
+- Solution: Create custom `gradlew.fish` that explicitly sources `gradle.fish`
+
+**Key learnings**:
+- Fish's lazy loading works perfectly when the right file is found first
+- Generated completions are problematic because they shadow real ones with helper functions
+- Use `set -p` (prepend) for Homebrew to override Fish's placeholder files
+- Some completions (gradlew) need explicit sourcing because lazy loading can't infer dependencies
+
+**Sources**:
+- [Fish completions documentation](https://fishshell.com/docs/current/completions.html)
+- [home-manager fish.nix source](https://github.com/nix-community/home-manager/blob/master/modules/programs/fish.nix)
+
+### GUI App PATH Configuration
+
+**Issue**: GUI applications (like Lens) can't find command-line tools from Nix (e.g., `gke-gcloud-auth-plugin`).
+
+**Root cause**: macOS GUI apps inherit their environment from `launchd`, not from shell configurations. By default, they don't have Nix paths in their PATH.
+
+**Solution** (2025-12-26):
+Configure `launchd.user.envVariables.PATH` in `modules/darwin/default.nix`:
+
+```nix
+# Set PATH for GUI applications (like Lens) so they can find Nix-managed binaries
+launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:${config.environment.systemPath}";
+```
+
+This sets the PATH environment variable in your user's launchd environment, making Nix-managed tools available to all GUI apps.
+
+**Important**: After applying this change, you must **log out and log back in** (or reboot) for launchd environment changes to take effect.
+
+### Shell Color Configuration
+
+**Issue**: `ls` and `ll` commands don't show colors even though GNU ls from Nix supports `--color=auto`.
+
+**Root cause**: `LS_COLORS` was set to BSD/macOS format (`ExFxBxDxCxegedabagacad`), but GNU ls requires a different format.
+
+**Solution** (2025-12-26):
+Set proper GNU `LS_COLORS` in `modules/home-manager/fish/default.nix`:
+
+```fish
+# GNU ls color settings (not BSD LSCOLORS format)
+set -gx LS_COLORS 'di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
+```
+
+This uses the GNU format where:
+- `di=34` - directories in blue
+- `ln=35` - symlinks in magenta
+- `ex=31` - executables in red
+- etc.
+
+Combined with shell aliases (`ls = "ls --color=auto"`), this provides colored output for both `ls` and `ll` commands.

@@ -64,12 +64,16 @@
       shellAliases = {
         grep = "rg";
         cat = "bat";
+        cp = "cp --reflink=auto";  # Use copy-on-write (CoW) when possible
+        ls = "ls --color=auto";  # Enable colors for GNU ls
+        ll = "ls -lah --color=auto";  # Long listing with colors
         iftop = "bandwhich";
         ua = "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y";
         whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";
         k = "kubectl";
         rebuild = "sudo darwin-rebuild switch --flake ~/.nixpkgs";
         update-all = "nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs";
+        nixgc = "sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +2 && nix-env -p /nix/var/nix/profiles/per-user/$USER/home-manager --delete-generations +2 && nix-collect-garbage -d";
         python = "python-wrapper";
         python3 = "python3-wrapper";
       };

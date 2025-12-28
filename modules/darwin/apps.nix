@@ -28,6 +28,8 @@
       "alfred"
       "keepassxc"
       "iterm2"
+      "itermai"
+      "crossover"
 
       # Security & Privacy
       "mullvad-vpn"
@@ -39,9 +41,11 @@
 
       # Media
       "spotify"
+      "qbittorrent"
 
       # Browsers & Desktop apps
       "firefox"
+      "tor-browser"
       "github"
 
       # Fonts

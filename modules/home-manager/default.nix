@@ -46,7 +46,7 @@
   programs.htop = {
     enable = true;
     settings = {
-      tree_view = true;
+      tree_view = false;
       show_cpu_frequency = true;
     };
   };
@@ -72,6 +72,34 @@
   };
 
   xdg.configFile = {
+    # Add completion paths that home-manager doesn't include by default
+    # Note: generateCompletions is disabled in fish/default.nix because generated
+    # completions shadow real ones (which define helper functions like __fish_brew_args).
+    # Do NOT run fish_update_completions - it regenerates the cache and breaks completions.
+    "fish/conf.d/zzz_completion_paths.fish".text = ''
+      # Add Fish's built-in completions directory (1000+ commands: git, npm, etc.)
+      set -l builtin_completions $__fish_data_dir/completions
+      if test -d $builtin_completions; and not contains $builtin_completions $fish_complete_path
+        set -ga fish_complete_path $builtin_completions
+      end
+
+      # PREPEND Homebrew completions so they take priority over Fish's placeholder files
+      # (Fish's built-in brew.fish is just a comment pointing to Homebrew's upstream)
+      if test -d /opt/homebrew/share/fish/vendor_completions.d
+        and not contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
+        set -p fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
+      end
+    '';
+
+    # gradlew.fish - Load gradle.fish which provides completions for both gradle and gradlew
+    "fish/completions/gradlew.fish".text = ''
+      # gradle.fish defines completions for both 'gradle' and 'gradlew' commands
+      # But Fish's lazy loading doesn't know this - it only looks for gradlew.fish when you type gradlew
+      # So we explicitly source gradle.fish to make both sets of completions available
+      set -l gradle_completion $__fish_data_dir/completions/gradle.fish
+      test -f $gradle_completion; and source $gradle_completion
+    '';
+
     "k9s/config.yml".text = ''
       k9s:
         liveViewAutoRefresh: true
@@ -118,6 +146,7 @@
         exec ${pkgs.python3.withPackages (ps: with ps; [ ipython asyncpg requests ])}/bin/python3.13 "$@"
       '')
 
+      uv  # Fast Python package installer and resolver
       ruby
 
       # Terminal & CLI tools
@@ -145,12 +174,14 @@
       stripe-cli
       k9s
       kubernetes-helm
+      (google-cloud-sdk.withExtraComponents [google-cloud-sdk.components.gke-gcloud-auth-plugin])
       openssl
       jdk21_headless
-      (google-cloud-sdk.withExtraComponents [ google-cloud-sdk.components.gke-gcloud-auth-plugin ])
+      gradle
       terraform
       claude-code
       cloc
+      auth0-cli
     ];
 };
 }

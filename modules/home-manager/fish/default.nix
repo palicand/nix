@@ -8,16 +8,21 @@
   programs = {
     fish = {
       enable = true;
+      generateCompletions = false;  # Disable - generated completions shadow real ones with helper functions
 
       shellAliases = {
         grep = "rg";
         cat = "bat";
+        cp = "cp --reflink=auto";  # Use copy-on-write (CoW) when possible
+        ls = "ls --color=auto";  # Enable colors for GNU ls
+        ll = "ls -lah --color=auto";  # Long listing with colors
         iftop = "bandwhich";
         ua = "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y";
         whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";
         k = "kubectl";
         rebuild = "sudo darwin-rebuild switch --flake ~/.nixpkgs";
         update-all = "nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs";
+        nixgc = "sudo nix-env -p /nix/var/nix/profiles/system --delete-generations +2 && nix-env -p /nix/var/nix/profiles/per-user/$USER/home-manager --delete-generations +2 && nix-collect-garbage -d";
         python = "python-wrapper";
         python3 = "python3-wrapper";
       };
@@ -29,7 +34,8 @@
         # Environment variables
         set -gx LANG en_US.UTF-8
         set -gx CLICOLOR 1
-        set -gx LS_COLORS "ExFxBxDxCxegedabagacad"
+        # GNU ls color settings (not BSD LSCOLORS format)
+        set -gx LS_COLORS 'di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
         set -gx TERM xterm-256color
 
         # Homebrew shell environment (macOS)
@@ -45,18 +51,6 @@
       interactiveShellInit = ''
         # Kubectl completion
         kubectl completion fish | source
-
-        # Add Homebrew completion paths
-        if test -d /opt/homebrew/share/fish/vendor_completions.d
-          contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
-          or set -gp fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
-        end
-
-        # Add additional completion paths for Nix packages
-        if test -d ~/.nix-profile/share/fish/vendor_completions.d
-          contains ~/.nix-profile/share/fish/vendor_completions.d $fish_complete_path
-          or set -gp fish_complete_path ~/.nix-profile/share/fish/vendor_completions.d
-        end
 
         # Git worktree wrapper - creates worktree and cds into it
         # Usage: gwt <dir-suffix> <branch-name>
@@ -91,6 +85,15 @@
         {
           name = "autopair";
           src = pkgs.fishPlugins.autopair.src;
+        }
+        {
+          name = "based";
+          src = pkgs.fetchFromGitHub {
+            owner = "Edu4rdSHL";
+            repo = "based.fish";
+            rev = "main";
+            sha256 = "sha256-2T4oJPRaMw/iv8pYNq+PJ3iSRoGsbKzSnORCmXU4x5A=";
+          };
         }
       ];
     };
