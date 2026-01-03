@@ -27,6 +27,46 @@ nix store diff-closures /run/current-system ./result
 
 # Update all flakes and rebuild (combines flake update + rebuild)
 update-all
+
+# Preview what would change when updating (without building)
+check-updates
+```
+
+### Previewing Updates
+
+The `check-updates` command shows what packages would be updated when running `update-all`, without actually building anything:
+
+```bash
+check-updates
+```
+
+**Output includes:**
+- List of packages that would be built from source
+- List of packages that would be downloaded (pre-built binaries)
+- Total download size and unpacked size
+- Package count summary
+
+**How it works:**
+1. Updates `flake.lock` (fast, shows which inputs changed)
+2. Runs `nix build --dry-run` to determine what would be built/downloaded
+3. Parses output to show clean package names (without `/nix/store/` paths)
+4. Displays totals without actually downloading or building
+
+**When to use:**
+- Before running `update-all` to see scope of changes
+- To check if critical packages would be rebuilt
+- To estimate download size on metered connections
+
+**Future enhancement (per-package sizes):**
+For detailed per-package size estimates (slower, requires querying each package individually):
+```bash
+# This approach is not implemented by default due to performance cost
+nix flake update --flake ~/.nixpkgs && \
+  nix build --dry-run --json --no-link ~/.nixpkgs#darwinConfigurations.uber-mac.system | \
+  jq -r '.[] | .drvPath' | \
+  xargs -n1 nix derivation show | \
+  jq -r 'to_entries[] | .value.outputs.out.path' | \
+  xargs nix path-info --closure-size
 ```
 
 ### Flake Management
@@ -241,6 +281,7 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
 - **Shell Aliases**:
   - `rebuild` → `sudo darwin-rebuild switch --flake ~/.nixpkgs` (requires sudo for system activation)
   - `update-all` → `nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs` (updates all flakes and rebuilds)
+  - `check-updates` → Preview what would change when updating (updates flake.lock, shows packages to build/fetch with sizes, no building)
   - `grep` → `rg` (ripgrep)
   - `cat` → `bat`
   - `ls` → `ls --color=auto` (GNU ls with colors)
@@ -715,3 +756,40 @@ which gke-gcloud-auth-plugin  # Should show /opt/homebrew/share/google-cloud-sdk
 ```
 
 **Note**: The Homebrew gcloud-cli will auto-update when you run `darwin-rebuild switch` because `onActivation.autoUpdate` and `onActivation.upgrade` are both enabled.
+
+### Homebrew Package Renames
+
+**Issue**: Homebrew occasionally renames casks, which can cause warnings like `Warning: wireshark was renamed to wireshark-app`.
+
+**Root cause**: Homebrew maintainers sometimes rename packages for consistency or to avoid conflicts. When this happens, the old name is deprecated.
+
+**Solution** (2026-01-03):
+
+1. **Update the cask name** in `modules/darwin/apps.nix`:
+   ```nix
+   casks = [
+     # ...
+     "wireshark-app"  # Changed from "wireshark"
+     # ...
+   ];
+   ```
+
+2. **Rebuild the configuration**:
+   ```bash
+   sudo darwin-rebuild switch --flake ~/.nixpkgs
+   ```
+
+3. **Uninstall the old package** (if both exist):
+   ```bash
+   brew uninstall --cask wireshark
+   ```
+
+4. **Reinstall with new name**:
+   ```bash
+   brew install --cask wireshark-app
+   ```
+
+**Note**: Homebrew recognizes renamed packages and will automatically uninstall the old name when you try to remove it, then you can reinstall with the new name.
+
+**Common renamed packages**:
+- `wireshark` → `wireshark-app` (2026-01-03)

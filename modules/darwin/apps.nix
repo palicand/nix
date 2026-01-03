@@ -23,7 +23,7 @@
       "lens"
       "postman"
       "gcloud-cli"
-      "wireshark"
+      "wireshark-app"
 
       # System utilities
       "stats"

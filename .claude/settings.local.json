@@ -68,7 +68,11 @@
       "Bash(gcloud version:*)",
       "Bash(/nix/store/jl9l7s03kxcsv6lw3cwhfnqahg5dxjjv-python3-3.12.12-env/bin/python:*)",
       "Bash(gsutil ls:*)",
-      "Skill(commit)"
+      "Skill(commit)",
+      "Bash(nix path-info:*)",
+      "Bash(nix eval:*)",
+      "Bash(nix profile show:*)",
+      "Bash(nix:*)"
     ]
   }
 }
