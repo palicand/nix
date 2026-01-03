@@ -9,6 +9,7 @@
   imports = [
     ../common.nix
     ./ollama.nix
+    ./charging-chime.nix
   ];
   # Auto upgrade nix package and the daemon service.
   # Create /etc/bashrc that loads the nix-darwin environment.
@@ -48,16 +49,6 @@
     nerd-fonts.iosevka
   ];
 
-  # Ollama service for local AI models
-  services.ollama = {
-    enable = true;
-    host = "127.0.0.1";
-    port = 11434;
-    loadModels = [
-      "qwen2.5:7b"
-    ];
-  };
-
   environment.systemPackages = with pkgs; [
     nixpkgs-fmt
   ];
@@ -65,4 +56,7 @@
   # Set PATH for GUI applications (like Lens) so they can find Nix-managed binaries
   # Include Homebrew paths to avoid breaking apps that depend on Homebrew
   launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:${config.environment.systemPath}";
+
+  # Disable charging chime/alert sound
+  system.chargingChime.enable = false;
 }

@@ -39,7 +39,8 @@
           dump = "cat-file -p";
           ff = "merge --ff";
           cleanup = "!git fetch -p && git branch -vv | awk '/: gone]/{print $1}' | xargs git branch -D";
-          wt = "!f() { base=$(git rev-parse --show-toplevel); parent=$(dirname \"$base\"); repo_name=$(basename \"$base\"); if git rev-parse --verify origin/main >/dev/null 2>&1; then remote_branch=origin/main; else remote_branch=origin/master; fi; worktree_dir=\"$parent/$repo_name-$1\"; git worktree add --no-track -b \"$2\" \"$worktree_dir\" \"$remote_branch\"; echo 'Copying ignored files to new worktree...'; cd \"$base\"; file_list=$(git ls-files --others --ignored --exclude-standard | grep -v '^\\.' | grep -E '\\.(env|vscode|idea|gradle|properties|yaml|yml|json)$'); file_count=$(echo \"$file_list\" | grep -c .); if [ $file_count -gt 0 ]; then echo \"Found $file_count file(s) to copy\"; echo \"$file_list\" | rsync -a --files-from=- --info=progress2 --no-inc-recursive . \"$worktree_dir/\"; echo 'Copy complete'; else echo 'No ignored files to copy'; fi; echo \"$worktree_dir\"; }; f";
+          wt = "worktree";
+          cwt = "!f() { base=$(git rev-parse --show-toplevel); parent=$(dirname \"$base\"); repo_name=$(basename \"$base\"); if git rev-parse --verify origin/main >/dev/null 2>&1; then remote_branch=origin/main; else remote_branch=origin/master; fi; worktree_dir=\"$parent/$repo_name-$1\"; git worktree add --no-track -b \"$2\" \"$worktree_dir\" \"$remote_branch\"; echo 'Copying ignored files/directories to new worktree...'; cd \"$base\"; copy_exts=$(git config --get worktree.copyExtensions || echo 'env|properties|yaml|yml|json'); copy_dirs=$(git config --get worktree.copyDirectories || echo '\\.vscode|\\.idea|\\.gradle'); all_files=$(git ls-files --others --ignored --exclude-standard); files_by_ext=$(echo \"$all_files\" | grep -E \"\\.($copy_exts)$\"); dirs_by_name=$(echo \"$all_files\" | grep -E \"^($copy_dirs)/\"); combined=$(printf \"%s\\n%s\" \"$files_by_ext\" \"$dirs_by_name\" | grep -v '^$'); file_count=$(echo \"$combined\" | grep -c . || echo 0); if [ $file_count -gt 0 ]; then echo \"Found $file_count file(s)/dir(s) to copy\"; echo \"$combined\" | rsync -a --files-from=- --info=progress2 --no-inc-recursive . \"$worktree_dir/\"; echo 'Copy complete'; else echo 'No ignored files/directories to copy'; fi; echo \"$worktree_dir\"; }; f";
         };
         rerere = {
           enabled = true;
@@ -69,6 +70,18 @@
         rebase = {
           autoStash = true;
           autoSquash = true;
+        };
+        worktree = {
+          # File extensions to copy when using 'git cwt' (pipe-separated regex)
+          # Default: env|properties|yaml|yml|json
+          # Customize per repo: git config worktree.copyExtensions "env|properties|json|xml"
+          copyExtensions = "env|properties|yaml|yml|json";
+
+          # Directory names to copy when using 'git cwt' (pipe-separated regex with escaped dots)
+          # Default: \.vscode|\.idea|\.gradle
+          # Customize per repo: git config worktree.copyDirectories "\.vscode|\.idea"
+          # Note: Dots must be escaped as \. for regex matching
+          copyDirectories = "\\.vscode|\\.idea|\\.gradle";
         };
       };
       includes = [{

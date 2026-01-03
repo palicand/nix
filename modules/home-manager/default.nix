@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./cli
+    ./zsh
     ./git
     ./fish
   ];
@@ -89,6 +89,15 @@
         and not contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
         set -p fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
       end
+
+      # Eagerly load Gradle completions so they work for ./gradlew immediately
+      # Fish's lazy loading only triggers for command names (gradlew), not paths (./gradlew)
+      # After typing 'gradle' once, './gradlew' works because gradle.fish is already loaded
+      # This ensures ./gradlew completions work from the first tab press in a fresh shell
+      set -l gradle_completion $__fish_data_dir/completions/gradle.fish
+      if test -f $gradle_completion
+        source $gradle_completion
+      end
     '';
 
     # gradlew.fish - Load gradle.fish which provides completions for both gradle and gradlew
@@ -169,12 +178,12 @@
         nodejs = null;
       })
       tig
+      glab  # GitLab CLI
       ffmpeg
       cmake
       stripe-cli
       k9s
       kubernetes-helm
-      (google-cloud-sdk.withExtraComponents [google-cloud-sdk.components.gke-gcloud-auth-plugin])
       openssl
       jdk21_headless
       gradle

@@ -2,7 +2,7 @@
   homebrew = {
 
     enable = true;
-    onActivation.autoUpdate = false;
+    onActivation.autoUpdate = true;
     onActivation.upgrade = true;
     global = {
       brewfile = true;
@@ -22,6 +22,8 @@
       "jetbrains-toolbox"
       "lens"
       "postman"
+      "gcloud-cli"
+      "wireshark"
 
       # System utilities
       "stats"
@@ -38,10 +40,12 @@
       # Communication
       "signal"
       "slack"
+      "whatsapp"
 
       # Media
       "spotify"
       "qbittorrent"
+      "vlc"
 
       # Browsers & Desktop apps
       "firefox"

@@ -4,6 +4,7 @@
     "$HOME/.npm-global/bin"
     "$HOME/.cargo/bin"
     "$HOME/.antigravity/antigravity/bin"
+    "/opt/homebrew/share/google-cloud-sdk/bin"
   ];
 
   programs = {
@@ -43,19 +44,19 @@
         source <(kubectl completion zsh)
         complete -F __start_kubectl k
 
-        # Git worktree wrapper - creates worktree and cds into it
-        # Usage: gwt <dir-suffix> <branch-name>
-        # Example: gwt feature-123 feat/my-feature
-        # Unalias gwt if oh-my-zsh git plugin created it
-        unalias gwt 2>/dev/null || true
-        gwt() {
+        # Git worktree wrapper - creates worktree with config copy and cds into it
+        # Usage: gcwt <dir-suffix> <branch-name>
+        # Example: gcwt feature-123 feat/my-feature
+        # Unalias gcwt if oh-my-zsh git plugin created it
+        unalias gcwt 2>/dev/null || true
+        gcwt() {
           if [[ $# -ne 2 ]]; then
-            echo "Usage: gwt <dir-suffix> <branch-name>"
-            echo "Example: gwt feature-123 feat/my-feature"
+            echo "Usage: gcwt <dir-suffix> <branch-name>"
+            echo "Example: gcwt feature-123 feat/my-feature"
             return 1
           fi
 
-          local worktree_dir=$(git wt "$1" "$2" | tail -n 1)
+          local worktree_dir=$(git cwt "$1" "$2" | tail -n 1)
           if [[ -d "$worktree_dir" ]]; then
             cd "$worktree_dir"
           fi
@@ -85,6 +86,37 @@
       # To use a preset, run: starship preset <name> -o ~/.config/starship.toml
       # Available presets: bracketed-segments, gruvbox-rainbow, jetpack, nerd-font-symbols,
       #                    no-runtime-versions, pastel-powerline, plain-text-symbols, pure-preset, tokyo-night
+      settings = {
+        # Custom format - put kubernetes at the end, input on new line
+        format = "$directory$git_branch$git_status$kubernetes\n$character";
+
+        # Disable GCP account display
+        gcloud.disabled = true;
+
+        # Always show Kubernetes context in bright blue (at the end)
+        kubernetes = {
+          disabled = false;
+          format = "on [󱃾 $context \\($namespace\\)](bright-blue) ";
+          symbol = "󱃾 ";
+        };
+
+        # Show current directory everywhere (not just in git repos)
+        directory = {
+          disabled = false;
+          truncation_length = 3;
+          truncate_to_repo = false;
+          read_only = " 󰌾";
+        };
+
+        # Show git status
+        git_branch = {
+          disabled = false;
+        };
+
+        git_status = {
+          disabled = false;
+        };
+      };
     };
 
     fzf = {

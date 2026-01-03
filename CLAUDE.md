@@ -109,9 +109,10 @@ The repository uses a layered module architecture:
    - macOS application linking activation script
 
 6. **Specialized modules**:
-   - `modules/home-manager/cli/default.nix`: Shell configuration (zsh, starship, fzf, neovim)
-   - `modules/home-manager/git/default.nix`: Git configuration with enhanced worktree workflow
-   - `modules/home-manager/fish/default.nix`: Fish shell configuration (now the default shell)
+   - `modules/home-manager/zsh/default.nix`: Zsh shell configuration (starship prompt, fzf, neovim, oh-my-zsh plugins)
+   - `modules/home-manager/git/default.nix`: Git configuration with enhanced worktree workflow (`wt`, `cwt` aliases)
+   - `modules/home-manager/fish/default.nix`: Fish shell configuration (now the default shell, plugin-git for auto g* abbreviations)
+   - `modules/darwin/charging-chime.nix`: Charging chime toggle module
 
 ### Profile System
 
@@ -166,16 +167,68 @@ Modify `modules/darwin/apps.nix`:
 
 ### Modifying Shell Configuration
 
-Edit `modules/home-manager/cli/default.nix`:
-- Shell aliases in `programs.zsh.shellAliases`
-- Environment variables in `programs.zsh.localVariables`
-- Shell initialization in `programs.zsh.initExtra`
+Edit `modules/home-manager/zsh/default.nix` for Zsh or `modules/home-manager/fish/default.nix` for Fish:
+- **Zsh**: Shell aliases in `programs.zsh.shellAliases`, environment variables in `programs.zsh.localVariables`, initialization in `programs.zsh.initContent`
+- **Fish**: Shell aliases in `programs.fish.shellAliases`, environment variables and initialization in `programs.fish.interactiveShellInit`
+- **PATH**: Add directories to `home.sessionPath` in either module (shared across shells)
+- **Starship Prompt**: Edit `programs.starship.settings` in `modules/home-manager/zsh/default.nix` (works for both Fish and Zsh)
+
+### Customizing Starship Prompt
+
+Starship prompt configuration is defined in `modules/home-manager/zsh/default.nix` under `programs.starship.settings` and works for both Fish and Zsh shells.
+
+**Current configuration:**
+- Two-line format: `$directory$git_branch$git_status$kubernetes\n$character`
+- Kubernetes context at the end in bright blue
+- GCloud module disabled
+- Directory always visible (not collapsed to repo)
+
+**To customize colors, format, or add modules:**
+
+1. Edit `modules/home-manager/zsh/default.nix`
+2. Modify the `programs.starship.settings` block
+3. Run `darwin-rebuild switch --flake ~/.nixpkgs`
+
+**Example - Change Kubernetes color:**
+```nix
+kubernetes = {
+  disabled = false;
+  format = "on [󱃾 $context \\($namespace\\)](cyan) ";  # Change to cyan
+};
+```
+
+**Example - Add more modules to the prompt:**
+```nix
+format = "$directory$git_branch$git_status$docker_context$kubernetes\n$character";
+```
+
+**Useful resources:**
+- [Starship configuration documentation](https://starship.rs/config/)
+- [Starship presets](https://starship.rs/presets/) - Pre-made themes you can use
 
 ### Changing User Settings
 
 The primary user is "palicand" defined in:
 - `modules/darwin/default.nix` (`system.primaryUser`)
 - `profiles/personal.nix` (`user.name`)
+
+### Configuring Charging Chime
+
+The `modules/darwin/charging-chime.nix` module provides a toggle for the macOS charging alert sound.
+
+**Usage:**
+Edit `modules/darwin/default.nix` and set:
+```nix
+system.chargingChime.enable = false;  # Disable the charging sound
+system.chargingChime.enable = true;   # Enable the charging sound (default)
+```
+
+**How it works:**
+- When `enable = false`: Sets `com.apple.PowerChime.ChimeOnNoHardware = true` and kills the PowerChime process
+- When `enable = true`: Sets `com.apple.PowerChime.ChimeOnNoHardware = false` and starts PowerChime.app
+- The activation script runs automatically during each `darwin-rebuild switch`
+
+**Current configuration:** Disabled (`system.chargingChime.enable = false` in `modules/darwin/default.nix:71`)
 
 ## Important Configuration Details
 
@@ -198,41 +251,72 @@ The primary user is "palicand" defined in:
   - Welcome message disabled via `set -g fish_greeting` in `modules/home-manager/fish/default.nix`
   - Tab completion paths fixed via `conf.d/zzz_completion_paths.fish` - adds Fish built-ins (1000+ commands) and Homebrew paths that home-manager doesn't include by default
   - Atuin shell history integration for smart, frequency-based command search
+  - **plugin-git**: Automatically creates `g*` abbreviations for all git aliases (like oh-my-zsh git plugin does for Zsh)
+- **Starship Prompt Configuration** (configured in `modules/home-manager/zsh/default.nix` - works for both Fish and Zsh):
+  - **Two-line prompt**: Environment info on first line, input cursor on second line
+  - **Directory**: Always visible (not just in git repos), truncated to 3 levels
+  - **Git**: Branch and status shown when in a git repository
+  - **Kubernetes**: Always visible at the end of the prompt in bright blue with format: `on 󱃾 context (namespace)`
+  - **GCloud**: Disabled (account info hidden)
+  - **Nerd Font symbols**: Uses Nerd Font glyphs (requires Iosevka Nerd Font or similar in terminal)
+  - To customize: Edit `programs.starship.settings` in `modules/home-manager/zsh/default.nix`
 - **GUI App Environment**: `launchd.user.envVariables.PATH` configured to include Homebrew and Nix paths so GUI apps (like Lens) can find command-line tools
-- **Homebrew on Activation**: `onActivation.upgrade = true` in `modules/darwin/apps.nix` - automatically upgrades all Homebrew packages when running `darwin-rebuild switch`
+- **Homebrew on Activation**: Both `onActivation.autoUpdate = true` and `onActivation.upgrade = true` in `modules/darwin/apps.nix` - automatically updates package lists and upgrades all Homebrew packages when running `darwin-rebuild switch`
+- **PATH Configuration**: `home.sessionPath` includes `/opt/homebrew/share/google-cloud-sdk/bin` for Google Cloud SDK components like `gke-gcloud-auth-plugin`
 
 ## Git Worktree Workflow
 
-This configuration includes an enhanced git worktree workflow for parallel development:
+This configuration includes an enhanced git worktree workflow for parallel development with two commands:
 
-### `git wt` alias
+### `git wt` / `gwt` - Simple Worktree
 
-Creates a new worktree with automatic secret/config copying:
+Direct alias to `git worktree` for standard worktree operations:
 
 ```bash
-git wt <dir-suffix> <branch-name>
+git wt list                    # List all worktrees
+git wt add <path> <branch>     # Create a new worktree
+git wt remove <path>           # Remove a worktree
+gwt list                       # Shorthand (automatically created by oh-my-zsh/plugin-git)
+```
+
+### `git cwt` / `gcwt` - Worktree with Config Copy
+
+Creates a new worktree with automatic secret/config file copying and auto-cd:
+
+```bash
+git cwt <dir-suffix> <branch-name>   # Create worktree with config copy
+gcwt <dir-suffix> <branch-name>      # Same + automatically cd into it
 ```
 
 **Features:**
 - Creates worktree in parent directory as `<repo-name>-<dir-suffix>`
-- Automatically copies relevant git-ignored config files (`.env`, `.vscode`, `.idea`, `.gradle`, `.properties`, `.yaml`, `.yml`, `.json`) to the new worktree
+- Automatically copies relevant git-ignored config files to the new worktree
 - Uses `rsync` with `--info=progress2` to show overall progress (percentage, speed, ETA) when copying files
 - Shows file count before copying and completion message after
 - Uses `origin/main` or `origin/master` as the base branch
-- Example: `git wt feature-123 feat/my-feature` creates `backend-platform-feature-123`
+- Example: `git cwt feature-123 feat/my-feature` creates `backend-platform-feature-123`
 
-### `gwt` function
+**Configurable File Extensions:**
 
-Wrapper around `git wt` that automatically `cd`s into the new worktree:
+The file extensions to copy are configurable via git config. Default extensions:
+```
+env|vscode|idea|gradle|properties|yaml|yml|json
+```
 
+**Customize per repository:**
 ```bash
-gwt <dir-suffix> <branch-name>
+git config worktree.copyExtensions "env|properties|json|xml"
+```
+
+**Customize globally for all repos:**
+```bash
+git config --global worktree.copyExtensions "env|properties|json"
 ```
 
 **Usage Example:**
 ```bash
-gwt extension-error BKBN-3828-my-feature
-# Creates worktree and immediately cd's into it
+gcwt extension-error BKBN-3828-my-feature
+# Creates worktree, copies configs, and immediately cd's into it
 ```
 
 This is particularly useful for:
@@ -242,22 +326,26 @@ This is particularly useful for:
 
 ### Implementation Notes
 
-- The `git wt` alias is defined in `modules/home-manager/git/default.nix`
-- The `gwt` function is defined in `modules/home-manager/cli/default.nix` (Zsh) and `modules/home-manager/fish/default.nix` (Fish)
+- The `git wt` and `git cwt` aliases are defined in `modules/home-manager/git/default.nix`
+- The `gcwt` shell function is defined in `modules/home-manager/zsh/default.nix` (Zsh) and `modules/home-manager/fish/default.nix` (Fish)
+- **Automatic g* abbreviations**:
+  - **Zsh**: oh-my-zsh git plugin automatically creates `gwt` and `gcwt` from git aliases
+  - **Fish**: plugin-git (installed via `fishPlugins.plugin-git`) automatically creates abbreviations for all git aliases
 - **Important**: Git aliases in Nix must be single-line strings, not multiline. Use semicolons and proper escaping.
-- **oh-my-zsh conflict**: The git plugin auto-creates a `gwt` alias from the `git wt` alias. The Zsh function includes `unalias gwt` to handle this.
 - **Performance**: Uses `rsync` instead of `cp` for faster copying with progress display, especially useful for projects with many config files
 
 ## Notable Packages
 
 - **Development**: rustup, nodejs, yarn, jdk21, poetry, cmake
 - **Python Tools**: uv (fast package installer), ipython, asyncpg, requests
-- **Cloud/DevOps**: google-cloud-sdk (with GKE auth plugin), kubernetes-helm, k9s, terraform, stripe-cli
+- **Cloud/DevOps**: kubernetes-helm, k9s, terraform, stripe-cli, glab (GitLab CLI), auth0-cli
+- **Cloud SDK** (Homebrew): gcloud-cli (with GKE auth plugin, gsutil, bq) - uses Homebrew instead of Nix to avoid Python cryptography issues
 - **Database**: postgresql_14, pgcli
-- **CLI Tools**: ripgrep, bat, fzf, jq, yq, htop, tree, tig, ffmpeg, jwt-cli
+- **CLI Tools**: ripgrep, bat, fzf, jq, yq, htop, tree, tig, ffmpeg, jwt-cli, cloc
 - **Terminal**: tmux (with cpu, resurrect, sensible, yank plugins)
+- **Fish Plugins**: z (directory jumper), fzf-fish, done (notifications), autopair (bracket pairing), plugin-git (auto g* abbreviations), based (base conversion)
 - **AI**: claude-code
-- **GUI Apps** (Homebrew): JetBrains Toolbox, Lens, Postman, VS Code, Firefox, Spotify, Signal, Slack, Stats, Alfred, KeePassXC, iTerm2, iter.ai, CrossOver, BetterDisplay, Mullvad VPN, 1Password, GitHub Desktop, Iosevka Nerd Font
+- **GUI Apps** (Homebrew): JetBrains Toolbox, Lens, Postman, gcloud-cli, VLC, Firefox, Tor Browser, Spotify, Signal, Slack, WhatsApp, Stats, Alfred, KeePassXC, iTerm2, iter.ai, CrossOver, Mullvad VPN, 1Password, GitHub Desktop, QBittorrent, Iosevka Nerd Font
 
 ## Nix Formatting
 
@@ -301,7 +389,7 @@ When defining git aliases in `modules/home-manager/git/default.nix`:
 The oh-my-zsh git plugin automatically creates aliases for git aliases (e.g., `gwt` from `git wt`):
 - **Problem**: This conflicts when defining functions with the same name
 - **Solution**: Add `unalias <name> 2>/dev/null || true` before function definitions
-- **Location**: `modules/home-manager/cli/default.nix` in `initContent`
+- **Location**: `modules/home-manager/zsh/default.nix` in `initContent`
 
 ### Adding New Files to Flakes
 
@@ -338,8 +426,8 @@ To change the default shell:
 When importing multiple modules that configure the same programs:
 - **Problem**: "option is defined multiple times" errors
 - **Common culprits**: starship, fzf, neovim when configured in multiple places
-- **Solution**: Configure shared tools once in `cli/default.nix`, enable integrations in other shells
-- **Example**: starship configured in `cli`, fish uses the same config automatically
+- **Solution**: Configure shared tools once in one shell module (e.g., `zsh/default.nix`), enable integrations in other shells
+- **Example**: starship configured in zsh module, fish uses the same config automatically
 
 ### Removing Unused Flake Inputs
 
@@ -499,19 +587,26 @@ rm -rf ~/.cache/fish/generated_completions/
 - ✅ Git, npm, kubectl, terraform - Fish's lazy loading works correctly
 - ✅ Gradle - Fish's gradle.fish loads with helper functions
 - ✅ Gradlew - Custom wrapper sources gradle.fish when gradlew is used
+- ✅ `./gradlew` - Works immediately in fresh shells (see below)
 
-**Why gradlew needs special handling**:
-- Fish's builtin `gradlew.fish` contains only: `complete -c gradlew -w gradle`
-- This wrapping syntax requires gradle completions to already be loaded
-- Fish's lazy loading doesn't know that `gradle.fish` provides `gradlew` completions
-- When you type `gradlew <tab>`, Fish looks for `gradlew.fish` but doesn't load `gradle.fish`
-- Solution: Create custom `gradlew.fish` that explicitly sources `gradle.fish`
+**Why `./gradlew` needs special handling** (2026-01-01):
+- **Problem**: In fresh shells, `./gradlew <tab>` shows directories instead of Gradle tasks
+- **Root cause**: Fish's lazy loading is command-name based, not path-based
+  - Typing `gradlew` loads `gradlew.fish` completion → works
+  - Typing `./gradlew` is seen as a path, not a command → doesn't load completions
+  - After typing `gradle` once, `./gradlew` works because `gradle.fish` is already loaded
+- **Solution** (2026-01-01): Eagerly load gradle completions on shell startup
+  - Added to `conf.d/zzz_completion_paths.fish` in `modules/home-manager/default.nix`
+  - Sources `gradle.fish` during shell initialization (lines 93-100)
+  - Small performance trade-off (eager vs lazy loading) for better UX
+  - Now `./gradlew`, `gradlew`, and `gradle` all work immediately in fresh shells
 
 **Key learnings**:
 - Fish's lazy loading works perfectly when the right file is found first
 - Generated completions are problematic because they shadow real ones with helper functions
 - Use `set -p` (prepend) for Homebrew to override Fish's placeholder files
 - Some completions (gradlew) need explicit sourcing because lazy loading can't infer dependencies
+- Path-based commands like `./gradlew` don't trigger lazy loading - need eager loading for reliable completions
 
 **Sources**:
 - [Fish completions documentation](https://fishshell.com/docs/current/completions.html)
@@ -556,3 +651,67 @@ This uses the GNU format where:
 - etc.
 
 Combined with shell aliases (`ls = "ls --color=auto"`), this provides colored output for both `ls` and `ll` commands.
+
+### Google Cloud SDK / gsutil Cryptography Error
+
+**Issue**: Running `gsutil` commands fails with error: `module 'lib' has no attribute 'EVP_MD_CTX_new'`
+
+**Root cause** (2026-01-01):
+The Nix `google-cloud-sdk` package has broken Python cryptography library bindings to OpenSSL. The FFI (Foreign Function Interface) is missing the `EVP_MD_CTX_new` function even though OpenSSL 3.6.0 should provide it. This is a known issue with how the Nix package builds the Python cryptography library.
+
+**Symptoms**:
+```bash
+gsutil cp gs://bucket/file.sql.gz ./
+# Error: module 'lib' has no attribute 'EVP_MD_CTX_new'
+
+gsutil ls
+# Error: module 'lib' has no attribute 'EVP_MD_CTX_new'
+```
+
+**Solution** (2026-01-01):
+Switch from Nix's `google-cloud-sdk` to Homebrew's `gcloud-cli` cask:
+
+1. **Remove from Nix packages** in `modules/home-manager/default.nix`:
+   ```nix
+   # Remove this line:
+   (google-cloud-sdk.withExtraComponents [google-cloud-sdk.components.gke-gcloud-auth-plugin])
+   ```
+
+2. **Add to Homebrew casks** in `modules/darwin/apps.nix`:
+   ```nix
+   casks = [
+     # ... other casks
+     "gcloud-cli"
+   ];
+   ```
+
+3. **Add Google Cloud SDK bin to PATH** in both `modules/home-manager/fish/default.nix` and `modules/home-manager/zsh/default.nix`:
+   ```nix
+   home.sessionPath = [
+     "$HOME/.npm-global/bin"
+     "$HOME/.cargo/bin"
+     "/opt/homebrew/share/google-cloud-sdk/bin"  # Add this line
+   ];
+   ```
+
+4. **Rebuild**:
+   ```bash
+   sudo darwin-rebuild switch --flake ~/.nixpkgs
+   ```
+
+5. **Restart your shell** for PATH changes to take effect (or open a new terminal)
+
+**Benefits of Homebrew version**:
+- ✅ Uses Python 3.13 with properly built cryptography bindings
+- ✅ More frequently updated (550.0.0 vs 548.0.0)
+- ✅ Better macOS integration
+- ✅ Includes all components: gcloud, gsutil, bq, gke-gcloud-auth-plugin
+
+**Verification**:
+```bash
+which gsutil  # Should show /opt/homebrew/bin/gsutil
+gsutil version  # Should work without errors
+which gke-gcloud-auth-plugin  # Should show /opt/homebrew/share/google-cloud-sdk/bin/gke-gcloud-auth-plugin
+```
+
+**Note**: The Homebrew gcloud-cli will auto-update when you run `darwin-rebuild switch` because `onActivation.autoUpdate` and `onActivation.upgrade` are both enabled.

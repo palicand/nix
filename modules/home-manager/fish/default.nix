@@ -3,6 +3,7 @@
   home.sessionPath = [
     "$HOME/.npm-global/bin"
     "$HOME/.cargo/bin"
+    "/opt/homebrew/share/google-cloud-sdk/bin"
   ];
 
   programs = {
@@ -52,17 +53,18 @@
         # Kubectl completion
         kubectl completion fish | source
 
-        # Git worktree wrapper - creates worktree and cds into it
-        # Usage: gwt <dir-suffix> <branch-name>
-        # Example: gwt feature-123 feat/my-feature
-        function gwt
+        # Git worktree wrapper - creates worktree with config copy and cds into it
+        # Usage: gcwt <dir-suffix> <branch-name>
+        # Example: gcwt feature-123 feat/my-feature
+        # Note: plugin-git automatically creates 'gcwt' abbreviation for 'git cwt'
+        function gcwt
           if test (count $argv) -ne 2
-            echo "Usage: gwt <dir-suffix> <branch-name>"
-            echo "Example: gwt feature-123 feat/my-feature"
+            echo "Usage: gcwt <dir-suffix> <branch-name>"
+            echo "Example: gcwt feature-123 feat/my-feature"
             return 1
           end
 
-          set worktree_dir (git wt $argv[1] $argv[2] | tail -n 1)
+          set worktree_dir (git cwt $argv[1] $argv[2] | tail -n 1)
           if test -d "$worktree_dir"
             cd "$worktree_dir"
           end
@@ -85,6 +87,10 @@
         {
           name = "autopair";
           src = pkgs.fishPlugins.autopair.src;
+        }
+        {
+          name = "plugin-git";
+          src = pkgs.fishPlugins.plugin-git.src;
         }
         {
           name = "based";
