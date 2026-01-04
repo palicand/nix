@@ -166,6 +166,7 @@
       postgresql_14
       poetry
       jq
+      gawk  # GNU AWK for check-updates command
       rsync
       tree
       yq
@@ -191,6 +192,8 @@
       claude-code
       cloc
       auth0-cli
+      nixfmt
+      nixd
     ];
 };
 }

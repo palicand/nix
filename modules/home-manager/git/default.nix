@@ -19,6 +19,7 @@
         ".metals/"
         ".bloop/"
         "target/"
+        ".claude/"
       ];
       settings = {
         user = {
@@ -75,7 +76,7 @@
           # File extensions to copy when using 'git cwt' (pipe-separated regex)
           # Default: env|properties|yaml|yml|json
           # Customize per repo: git config worktree.copyExtensions "env|properties|json|xml"
-          copyExtensions = "env|properties|yaml|yml|json";
+          copyExtensions = "env|properties|yaml|yml|json|md";
 
           # Directory names to copy when using 'git cwt' (pipe-separated regex with escaped dots)
           # Default: \.vscode|\.idea|\.gradle

@@ -16,22 +16,4 @@
       };
     };
   };
-  # registry = {
-  #   nixpkgs = {
-  #     from = {
-  #       id = "nixpkgs";
-  #       type = "indirect";
-  #     };
-  #     flake = inputs.nixpkgs;
-  #   };
-
-  #   stable = {
-  #     from = {
-  #       id = "stable";
-  #       type = "indirect";
-  #     };
-  #     flake = inputs.stable;
-  #   };
-  # };
-
 }
