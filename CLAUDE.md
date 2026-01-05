@@ -282,9 +282,10 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
 - **Shell Aliases**:
   - `rebuild` → `sudo darwin-rebuild switch --flake ~/.nixpkgs` (requires sudo for system activation)
   - `update-all` → `nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs` (updates all flakes and rebuilds)
-  - `check-updates` → Preview what would change when updating (updates flake.lock, shows packages to build/fetch with sizes, no building)
+  - `check-updates` → Preview what would change when updating (updates flake.lock, shows packages to build/fetch with sizes, no building). **Note**: Requires GNU AWK (gawk) for advanced regex features - see awk alias below.
   - `grep` → `rg` (ripgrep)
   - `cat` → `bat`
+  - `awk` → `gawk` (GNU AWK - supports advanced regex features like array capture in match(), used by check-updates command)
   - `ls` → `ls --color=auto` (GNU ls with colors)
   - `ll` → `ls -lah --color=auto` (long listing with colors)
   - `cp` → `cp --reflink=auto` (use copy-on-write when possible)
@@ -383,8 +384,9 @@ This is particularly useful for:
 - **Cloud/DevOps**: kubernetes-helm, k9s, terraform, stripe-cli, glab (GitLab CLI), auth0-cli
 - **Cloud SDK** (Homebrew): gcloud-cli (with GKE auth plugin, gsutil, bq) - uses Homebrew instead of Nix to avoid Python cryptography issues
 - **Database**: postgresql_14, pgcli
-- **CLI Tools**: ripgrep, bat, fzf, jq, yq, htop, tree, tig, ffmpeg, jwt-cli, cloc
+- **CLI Tools**: ripgrep, bat, fzf, jq, yq, gawk (GNU AWK for check-updates), htop, tree, tig, ffmpeg, jwt-cli, cloc
 - **Terminal**: tmux (with cpu, resurrect, sensible, yank plugins)
+- **Nix Tools**: nixfmt (official formatter), nixfmt-tree (treefmt wrapper for directory formatting)
 - **Fish Plugins**: z (directory jumper), fzf-fish, done (notifications), autopair (bracket pairing), plugin-git (auto g* abbreviations), based (base conversion)
 - **AI**: claude-code
 - **GUI Apps** (Homebrew): JetBrains Toolbox, Lens, Postman, gcloud-cli, VLC, Firefox, Tor Browser, Spotify, Signal, Slack, WhatsApp, Stats, Alfred, KeePassXC, iTerm2, iter.ai, CrossOver, Mullvad VPN, 1Password, GitHub Desktop, QBittorrent, Iosevka Nerd Font
