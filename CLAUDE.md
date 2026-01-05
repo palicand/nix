@@ -403,15 +403,17 @@ This repository uses automated Nix formatting with pre-commit hooks.
 nix develop
 ```
 
-After running `nix develop` once, the pre-commit hooks are installed and will automatically format all `.nix` files before every commit.
+After running `nix develop` once, the pre-commit hooks are installed and will automatically format and lint all `.nix` files before every commit.
 
 **How it works:**
 - Uses `pre-commit-hooks.nix` (Nix equivalent of Node's husky/pre-commit)
 - Configured in `flake.nix` under `devShells.aarch64-darwin.default`
-- Runs `nixfmt` (official Nix formatter) on all modified `.nix` files before each commit
+- Runs two hooks on all modified `.nix` files before each commit:
+  - `nixfmt` - Official Nix formatter (formats code)
+  - `statix` - Nix linter (checks for warnings and best practices)
 - Hooks install automatically when any developer runs `nix develop`
 
-**Manual formatting:**
+**Manual formatting and linting:**
 ```bash
 # Format a single file
 nixfmt <file.nix>
@@ -419,17 +421,22 @@ nixfmt <file.nix>
 # Format entire directory recursively (uses treefmt wrapper)
 nixfmt-tree
 
-# Both tools are available in home.packages
+# Lint all Nix files in the current directory
+statix check .
+
+# All tools are available in home.packages
 ```
 
 **Key differences:**
 - `nixfmt` - The actual Nix formatter binary (formats individual files)
 - `nixfmt-tree` - A treefmt wrapper pre-configured for recursive directory formatting
-- Pre-commit hooks use `nixfmt` since they receive individual filenames
+- `statix` - Nix linter that checks for warnings and suggests best practices
+- Pre-commit hooks use `nixfmt` and `statix check` since they receive individual filenames
 
 **References:**
 - [NixOS/nixfmt - Official Nix formatter](https://github.com/NixOS/nixfmt)
 - [nixfmt-tree - MyNixOS](https://mynixos.com/nixpkgs/package/nixfmt-tree)
+- [statix - Linter/fixer for Nix](https://github.com/nerdypepper/statix)
 - [Auto formatting using treefmt-nix](https://nixos.asia/en/treefmt)
 
 ## Common Gotchas and Troubleshooting

@@ -32,12 +32,7 @@
     }:
     let
       inherit (darwin.lib) darwinSystem;
-      inherit (nixpkgs.lib) nixosSystem;
-      inherit (home-manager.lib) homeManagerConfiguration;
-      inherit (builtins) listToAttrs map;
-
-      isDarwin = system: (builtins.elem system nixpkgs.lib.platforms.darwin);
-      homePrefix = system: if isDarwin system then "/Users" else "/home";
+      inherit (builtins) listToAttrs;
 
       # generate a base darwin configuration with the
       # specified hostname, overlays, and any extraModules applied
@@ -57,31 +52,6 @@
           specialArgs = { inherit inputs nixpkgs; };
         };
 
-      # generate a home-manager configuration usable on any unix system
-      # with overlays and any extraModules applied
-      mkHomeConfig =
-        {
-          username,
-          system ? "x86_64-linux",
-          nixpkgs ? inputs.nixpkgs,
-          baseModules ? [
-            ./modules/home-manager
-            {
-              home.sessionVariables = {
-                NIX_PATH = "nixpkgs=${nixpkgs}\${NIX_PATH:+:}$NIX_PATH";
-              };
-            }
-          ],
-          extraModules ? [ ],
-        }:
-        homeManagerConfiguration rec {
-          inherit system username;
-          homeDirectory = "${homePrefix system}/${username}";
-          extraSpecialArgs = { inherit inputs nixpkgs; };
-          configuration = {
-            imports = baseModules ++ extraModules;
-          };
-        };
     in
     {
       checks = listToAttrs (
@@ -128,6 +98,13 @@
                   name = "nixfmt";
                   description = "Format Nix files with nixfmt";
                   entry = "${pkgs.nixfmt}/bin/nixfmt";
+                  files = "\\.nix$";
+                };
+                statix = {
+                  enable = true;
+                  name = "statix";
+                  description = "Lint Nix files with statix";
+                  entry = "${pkgs.statix}/bin/statix check";
                   files = "\\.nix$";
                 };
               };

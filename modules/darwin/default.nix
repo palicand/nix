@@ -18,15 +18,23 @@
 
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
-  system.stateVersion = 6;
-  system.primaryUser = "palicand";
+  system = {
+    stateVersion = 6;
+    primaryUser = "palicand";
+    # Disable charging chime/alert sound
+    chargingChime.enable = false;
+  };
 
   # Keep existing nixbld group ID after stateVersion upgrade
   ids.gids.nixbld = 30000;
-  documentation.enable = false;
-  documentation.doc.enable = false;
-  documentation.info.enable = false;
-  documentation.man.enable = false;
+
+  documentation = {
+    enable = false;
+    doc.enable = false;
+    info.enable = false;
+    man.enable = false;
+  };
+
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -56,7 +64,4 @@
   # Set PATH for GUI applications (like Lens) so they can find Nix-managed binaries
   # Include Homebrew paths to avoid breaking apps that depend on Homebrew
   launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:${config.environment.systemPath}";
-
-  # Disable charging chime/alert sound
-  system.chargingChime.enable = false;
 }

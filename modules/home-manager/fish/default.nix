@@ -76,23 +76,23 @@
       plugins = [
         {
           name = "z";
-          src = pkgs.fishPlugins.z.src;
+          inherit (pkgs.fishPlugins.z) src;
         }
         {
           name = "fzf-fish";
-          src = pkgs.fishPlugins.fzf-fish.src;
+          inherit (pkgs.fishPlugins.fzf-fish) src;
         }
         {
           name = "done";
-          src = pkgs.fishPlugins.done.src;
+          inherit (pkgs.fishPlugins.done) src;
         }
         {
           name = "autopair";
-          src = pkgs.fishPlugins.autopair.src;
+          inherit (pkgs.fishPlugins.autopair) src;
         }
         {
           name = "plugin-git";
-          src = pkgs.fishPlugins.plugin-git.src;
+          inherit (pkgs.fishPlugins.plugin-git) src;
         }
         {
           name = "based";

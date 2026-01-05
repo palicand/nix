@@ -11,67 +11,70 @@
     ./git
     ./fish
   ];
-  programs.home-manager = {
-    enable = true;
-    path = "${config.home.homeDirectory}/.nixpkgs/modules/home-manager";
-  };
 
-  programs.tmux = {
-    enable = true;
-    clock24 = true;
-    mouse = true;
-    terminal = "screen-256color";
-    baseIndex = 1;
-    escapeTime = 0;
-    historyLimit = 50000;
-
-    plugins = with pkgs; [
-      tmuxPlugins.cpu
-      tmuxPlugins.resurrect
-      tmuxPlugins.sensible
-      tmuxPlugins.yank
-    ];
-
-    extraConfig = ''
-      # Vim-like pane navigation
-      bind h select-pane -L
-      bind j select-pane -D
-      bind k select-pane -U
-      bind l select-pane -R
-
-      # Better splits
-      bind | split-window -h -c "#{pane_current_path}"
-      bind - split-window -v -c "#{pane_current_path}"
-
-      # Reload config
-      bind r source-file ~/.config/tmux/tmux.conf \; display "Config reloaded!"
-    '';
-  };
-
-  programs.htop = {
-    enable = true;
-    settings = {
-      tree_view = false;
-      show_cpu_frequency = true;
+  programs = {
+    home-manager = {
+      enable = true;
+      path = "${config.home.homeDirectory}/.nixpkgs/modules/home-manager";
     };
-  };
 
-  programs.bat = {
-    enable = true;
-    config = {
-      theme = "TwoDark";
-      pager = "less -FR";
+    tmux = {
+      enable = true;
+      clock24 = true;
+      mouse = true;
+      terminal = "screen-256color";
+      baseIndex = 1;
+      escapeTime = 0;
+      historyLimit = 50000;
+
+      plugins = with pkgs; [
+        tmuxPlugins.cpu
+        tmuxPlugins.resurrect
+        tmuxPlugins.sensible
+        tmuxPlugins.yank
+      ];
+
+      extraConfig = ''
+        # Vim-like pane navigation
+        bind h select-pane -L
+        bind j select-pane -D
+        bind k select-pane -U
+        bind l select-pane -R
+
+        # Better splits
+        bind | split-window -h -c "#{pane_current_path}"
+        bind - split-window -v -c "#{pane_current_path}"
+
+        # Reload config
+        bind r source-file ~/.config/tmux/tmux.conf \; display "Config reloaded!"
+      '';
     };
-  };
 
-  programs.ssh = {
-    enable = true;
-    enableDefaultConfig = false;
-    matchBlocks = {
-      "*" = {
-        controlMaster = "auto";
-        controlPersist = "10m";
-        compression = true;
+    htop = {
+      enable = true;
+      settings = {
+        tree_view = false;
+        show_cpu_frequency = true;
+      };
+    };
+
+    bat = {
+      enable = true;
+      config = {
+        theme = "TwoDark";
+        pager = "less -FR";
+      };
+    };
+
+    ssh = {
+      enable = true;
+      enableDefaultConfig = false;
+      matchBlocks = {
+        "*" = {
+          controlMaster = "auto";
+          controlPersist = "10m";
+          compression = true;
+        };
       };
     };
   };
@@ -189,7 +192,7 @@
       postgresql_14
       poetry
       jq
-      gawk # GNU AWK for check-updates command
+      gawk
       rsync
       tree
       yq
