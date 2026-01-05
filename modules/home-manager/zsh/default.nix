@@ -28,7 +28,15 @@
       };
       oh-my-zsh = {
         enable = true;
-        plugins = [ "git" "sudo" "common-aliases" "yarn" "docker" "npm" "dotenv" ];
+        plugins = [
+          "git"
+          "sudo"
+          "common-aliases"
+          "yarn"
+          "docker"
+          "npm"
+          "dotenv"
+        ];
       };
       initContent = ''
         # Homebrew shell environment (macOS)
@@ -66,9 +74,9 @@
         grep = "rg";
         cat = "bat";
         awk = "gawk";
-        cp = "cp --reflink=auto";  # Use copy-on-write (CoW) when possible
-        ls = "ls --color=auto";  # Enable colors for GNU ls
-        ll = "ls -lah --color=auto";  # Long listing with colors
+        cp = "cp --reflink=auto"; # Use copy-on-write (CoW) when possible
+        ls = "ls --color=auto"; # Enable colors for GNU ls
+        ll = "ls -lah --color=auto"; # Long listing with colors
         iftop = "bandwhich";
         ua = "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y";
         whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 {
   home.sessionPath = [
     "$HOME/.npm-global/bin"
@@ -9,15 +9,15 @@
   programs = {
     fish = {
       enable = true;
-      generateCompletions = false;  # Disable - generated completions shadow real ones with helper functions
+      generateCompletions = false; # Disable - generated completions shadow real ones with helper functions
 
       shellAliases = {
         grep = "rg";
         cat = "bat";
         awk = "gawk";
-        cp = "cp --reflink=auto";  # Use copy-on-write (CoW) when possible
-        ls = "ls --color=auto";  # Enable colors for GNU ls
-        ll = "ls -lah --color=auto";  # Long listing with colors
+        cp = "cp --reflink=auto"; # Use copy-on-write (CoW) when possible
+        ls = "ls --color=auto"; # Enable colors for GNU ls
+        ll = "ls -lah --color=auto"; # Long listing with colors
         iftop = "bandwhich";
         ua = "sudo apt update && sudo apt dist-upgrade -y && sudo apt autoremove -y";
         whatismyip = "dig +short myip.opendns.com @resolver1.opendns.com";

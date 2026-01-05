@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
   imports = [
@@ -141,21 +146,39 @@
 
     packages = with pkgs; [
       # Languages/Runtimes
-      (python3.withPackages (ps: with ps; [
-        ipython
-        asyncpg
-        requests
-      ]))
+      (python3.withPackages (
+        ps: with ps; [
+          ipython
+          asyncpg
+          requests
+        ]
+      ))
 
       # Python3 wrapper to fix symlink issue
       (pkgs.writeShellScriptBin "python3-wrapper" ''
-        exec ${pkgs.python3.withPackages (ps: with ps; [ ipython asyncpg requests ])}/bin/python3.13 "$@"
+        exec ${
+          pkgs.python3.withPackages (
+            ps: with ps; [
+              ipython
+              asyncpg
+              requests
+            ]
+          )
+        }/bin/python3.13 "$@"
       '')
       (pkgs.writeShellScriptBin "python-wrapper" ''
-        exec ${pkgs.python3.withPackages (ps: with ps; [ ipython asyncpg requests ])}/bin/python3.13 "$@"
+        exec ${
+          pkgs.python3.withPackages (
+            ps: with ps; [
+              ipython
+              asyncpg
+              requests
+            ]
+          )
+        }/bin/python3.13 "$@"
       '')
 
-      uv  # Fast Python package installer and resolver
+      uv # Fast Python package installer and resolver
       ruby
 
       # Terminal & CLI tools
@@ -166,7 +189,7 @@
       postgresql_14
       poetry
       jq
-      gawk  # GNU AWK for check-updates command
+      gawk # GNU AWK for check-updates command
       rsync
       tree
       yq
@@ -179,7 +202,7 @@
         nodejs = null;
       })
       tig
-      glab  # GitLab CLI
+      glab # GitLab CLI
       ffmpeg
       cmake
       stripe-cli
@@ -193,7 +216,8 @@
       cloc
       auth0-cli
       nixfmt
+      nixfmt-tree # Official Nix formatter using treefmt
       nixd
     ];
-};
+  };
 }

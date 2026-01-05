@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
@@ -39,7 +44,10 @@ in
       loadModels = mkOption {
         type = types.listOf types.str;
         default = [ ];
-        example = [ "qwen2.5:7b" "deepseek-coder-v2" ];
+        example = [
+          "qwen2.5:7b"
+          "deepseek-coder-v2"
+        ];
         description = ''
           Download these models using ollama pull as soon as the ollama service has started.
           Search for models at https://ollama.com/library.
@@ -73,11 +81,11 @@ in
         ];
         EnvironmentVariables = {
           OLLAMA_HOST = "${cfg.host}:${toString cfg.port}";
-        } // cfg.environmentVariables // (
-          optionalAttrs (cfg.models != null) {
-            OLLAMA_MODELS = cfg.models;
-          }
-        );
+        }
+        // cfg.environmentVariables
+        // (optionalAttrs (cfg.models != null) {
+          OLLAMA_MODELS = cfg.models;
+        });
       };
     };
 

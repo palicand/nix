@@ -1,5 +1,8 @@
-{ inputs, config, lib, pkgs, ... }: {
-  nixpkgs = { config = import ./config.nix; };
+{ pkgs, ... }:
+{
+  nixpkgs = {
+    config = import ./config.nix;
+  };
   nix = {
     package = pkgs.nix;
     extraOptions = ''

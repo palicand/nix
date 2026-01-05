@@ -85,16 +85,18 @@
           copyDirectories = "\\.vscode|\\.idea|\\.gradle";
         };
       };
-      includes = [{
-        contents = {
-          core = {
-            editor = "vim";
+      includes = [
+        {
+          contents = {
+            core = {
+              editor = "vim";
+            };
+            push = {
+              default = "simple";
+            };
           };
-          push = {
-            default = "simple";
-          };
-        };
-      }];
+        }
+      ];
     };
   };
 }

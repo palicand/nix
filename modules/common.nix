@@ -1,11 +1,19 @@
-{ inputs, config, lib, pkgs, ... }: {
-  imports = [ ./primary.nix ./nixpkgs.nix ];
+{
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
+  imports = [
+    ./primary.nix
+    ./nixpkgs.nix
+  ];
 
   user = {
     description = "Andrej Palicka";
-    home = "${
-        if pkgs.stdenvNoCC.isDarwin then "/Users" else "/home"
-      }/${config.user.name}";
+    home = "${if pkgs.stdenvNoCC.isDarwin then "/Users" else "/home"}/${config.user.name}";
     shell = pkgs.fish;
   };
 
@@ -34,7 +42,11 @@
       nixpkgs.source = "${pkgs.path}";
     };
     # list of acceptable shells in /etc/shells
-    shells = with pkgs; [ bash zsh fish ];
+    shells = with pkgs; [
+      bash
+      zsh
+      fish
+    ];
   };
 
 }
