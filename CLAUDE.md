@@ -115,9 +115,10 @@ darwin-rebuild --list-generations
 
 The `flake.nix` is the entry point that orchestrates the entire configuration:
 
-- **Inputs**: Defines dependencies (nixpkgs unstable, home-manager, nix-darwin)
+- **Inputs**: Defines dependencies (nixpkgs unstable, home-manager, nix-darwin, pre-commit-hooks)
 - **Outputs**: Generates darwin configurations using helper functions `mkDarwinConfig` and `mkHomeConfig`
 - **Darwin Configuration**: `uber-mac` for aarch64-darwin (Apple Silicon)
+- **Development Shell**: Provides `nix develop` with pre-commit hooks for automatic Nix formatting
 - **Simplified**: Removed unused flake inputs (stable nixpkgs, comma, devshell, flake-compat, flake-utils) for faster rebuilds
 
 ### Module System
@@ -390,11 +391,44 @@ This is particularly useful for:
 
 ## Nix Formatting
 
-Use `nixpkgs-fmt` (installed in environment.systemPackages) to format Nix files:
+This repository uses automated Nix formatting with pre-commit hooks.
 
+### Automated Formatting (Pre-commit Hooks)
+
+**Setup** (one-time):
 ```bash
-nixpkgs-fmt <file.nix>
+# Enter the development shell to install pre-commit hooks
+nix develop
 ```
+
+After running `nix develop` once, the pre-commit hooks are installed and will automatically format all `.nix` files before every commit.
+
+**How it works:**
+- Uses `pre-commit-hooks.nix` (Nix equivalent of Node's husky/pre-commit)
+- Configured in `flake.nix` under `devShells.aarch64-darwin.default`
+- Runs `nixfmt` (official Nix formatter) on all modified `.nix` files before each commit
+- Hooks install automatically when any developer runs `nix develop`
+
+**Manual formatting:**
+```bash
+# Format a single file
+nixfmt <file.nix>
+
+# Format entire directory recursively (uses treefmt wrapper)
+nixfmt-tree
+
+# Both tools are available in home.packages
+```
+
+**Key differences:**
+- `nixfmt` - The actual Nix formatter binary (formats individual files)
+- `nixfmt-tree` - A treefmt wrapper pre-configured for recursive directory formatting
+- Pre-commit hooks use `nixfmt` since they receive individual filenames
+
+**References:**
+- [NixOS/nixfmt - Official Nix formatter](https://github.com/NixOS/nixfmt)
+- [nixfmt-tree - MyNixOS](https://mynixos.com/nixpkgs/package/nixfmt-tree)
+- [Auto formatting using treefmt-nix](https://nixos.asia/en/treefmt)
 
 ## Common Gotchas and Troubleshooting
 
