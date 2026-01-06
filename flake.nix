@@ -19,6 +19,20 @@
       url = "github:cachix/pre-commit-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-homebrew = {
+      url = "github:zhaofengli/nix-homebrew";
+    };
+
+    # Homebrew taps
+    homebrew-bundle = {
+      url = "github:homebrew/homebrew-bundle";
+      flake = false;
+    };
+    homebrew-services = {
+      url = "github:homebrew/homebrew-services";
+      flake = false;
+    };
   };
 
   outputs =
@@ -28,6 +42,9 @@
       darwin,
       home-manager,
       pre-commit-hooks,
+      nix-homebrew,
+      homebrew-bundle,
+      homebrew-services,
       ...
     }:
     let
@@ -74,6 +91,20 @@
         uber-mac = mkDarwinConfig {
           system = "aarch64-darwin";
           extraModules = [
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                enable = true;
+                enableRosetta = false;
+                user = "palicand";
+                autoMigrate = true;
+                taps = {
+                  "homebrew/homebrew-bundle" = homebrew-bundle;
+                  "homebrew/homebrew-services" = homebrew-services;
+                };
+                mutableTaps = false;
+              };
+            }
             ./profiles/personal.nix
             ./modules/darwin/apps.nix
             { homebrew.brewPrefix = "/opt/homebrew/bin"; }

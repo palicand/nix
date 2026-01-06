@@ -19,10 +19,7 @@
       "pinentry-mac"
     ];
 
-    taps = [
-      "homebrew/bundle"
-      "homebrew/services"
-    ];
+    # Taps are now managed by nix-homebrew in flake.nix
     casks = [
       # Development tools
       "jetbrains-toolbox"

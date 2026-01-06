@@ -391,6 +391,42 @@ This is particularly useful for:
 - **AI**: claude-code
 - **GUI Apps** (Homebrew): JetBrains Toolbox, Lens, Postman, gcloud-cli, VLC, Firefox, Tor Browser, Spotify, Signal, Slack, WhatsApp, Stats, Alfred, KeePassXC, iTerm2, iter.ai, CrossOver, Mullvad VPN, 1Password, GitHub Desktop, QBittorrent, Iosevka Nerd Font
 
+## Homebrew Management
+
+This configuration uses a two-part approach for Homebrew management:
+
+### nix-homebrew (Homebrew Installation & Taps)
+- Manages the Homebrew installation itself
+- Declarative tap management (no manual `brew tap` commands needed)
+- Configured in `flake.nix` extraModules for uber-mac
+- Taps are pinned via flake inputs for reproducibility
+
+**Current taps:**
+- homebrew/bundle (for Brewfile support)
+- homebrew/services (for service management)
+
+### nix-darwin homebrew module (Package Management)
+- Manages packages: formulas (brews), casks, and Mac App Store apps
+- Configured in `modules/darwin/apps.nix`
+- Auto-updates on `darwin-rebuild switch` (onActivation.autoUpdate = true)
+
+**To add a new tap:**
+1. Add tap as flake input in `flake.nix` (set `flake = false`)
+2. Add tap to `nix-homebrew.taps` configuration in uber-mac extraModules
+3. Rebuild with `darwin-rebuild switch`
+
+**Benefits:**
+- Reproducible tap versions via flake.lock
+- Declarative configuration (no manual tap management)
+- Auto-migration of existing Homebrew installation
+- Future-ready for Homebrew version pinning
+
+**Migration notes:**
+- During initial setup, existing `/opt/homebrew/Library/Taps` was backed up and removed
+- nix-homebrew now manages taps as read-only symlinks to /nix/store
+- Taps are owned by root and cannot be manually modified
+- `brew doctor` may show false "deprecated taps" warning - this can be ignored
+
 ## Nix Formatting
 
 This repository uses automated Nix formatting with pre-commit hooks.
