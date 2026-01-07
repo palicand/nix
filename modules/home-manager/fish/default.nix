@@ -7,6 +7,25 @@
   ];
 
   programs = {
+    atuin = {
+      enable = true;
+      enableFishIntegration = true;
+      settings = {
+        # Sync history across machines (requires atuin account)
+        auto_sync = false;
+        # Search mode: prefix, fulltext, fuzzy, skim
+        search_mode = "fuzzy";
+        # Filter mode for search
+        filter_mode = "global";
+        # Show preview of command
+        show_preview = true;
+        # Use Ctrl+R for atuin instead of default Fish history
+        inline_height = 30;
+        # Style: auto, full, compact
+        style = "compact";
+      };
+    };
+
     fish = {
       enable = true;
       generateCompletions = false; # Disable - generated completions shadow real ones with helper functions
@@ -93,15 +112,6 @@
         {
           name = "plugin-git";
           inherit (pkgs.fishPlugins.plugin-git) src;
-        }
-        {
-          name = "based";
-          src = pkgs.fetchFromGitHub {
-            owner = "Edu4rdSHL";
-            repo = "based.fish";
-            rev = "main";
-            sha256 = "sha256-2T4oJPRaMw/iv8pYNq+PJ3iSRoGsbKzSnORCmXU4x5A=";
-          };
         }
       ];
     };

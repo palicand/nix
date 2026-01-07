@@ -293,7 +293,12 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
 - **Fish Shell Configuration**:
   - Welcome message disabled via `set -g fish_greeting` in `modules/home-manager/fish/default.nix`
   - Tab completion paths fixed via `conf.d/zzz_completion_paths.fish` - adds Fish built-ins (1000+ commands) and Homebrew paths that home-manager doesn't include by default
-  - Atuin shell history integration for smart, frequency-based command search
+  - **Atuin**: Smart shell history with frequency-based, context-aware search
+    - Replaces Ctrl+R with fuzzy search interface
+    - Learns from your command usage patterns to prioritize frequently-used commands
+    - Configured in `modules/home-manager/fish/default.nix` with `programs.atuin`
+    - Settings: fuzzy search mode, global filter, compact style, no cloud sync (privacy)
+    - Makes command history truly predictive based on your actual usage
   - **plugin-git**: Automatically creates `g*` abbreviations for all git aliases (like oh-my-zsh git plugin does for Zsh)
 - **Starship Prompt Configuration** (configured in `modules/home-manager/zsh/default.nix` - works for both Fish and Zsh):
   - Uses default Starship format with all standard modules
