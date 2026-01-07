@@ -296,13 +296,11 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
   - Atuin shell history integration for smart, frequency-based command search
   - **plugin-git**: Automatically creates `g*` abbreviations for all git aliases (like oh-my-zsh git plugin does for Zsh)
 - **Starship Prompt Configuration** (configured in `modules/home-manager/zsh/default.nix` - works for both Fish and Zsh):
-  - **Two-line prompt**: Environment info on first line, input cursor on second line
-  - **Directory**: Always visible (not just in git repos), truncated to 3 levels
-  - **Git**: Branch and status shown when in a git repository
-  - **Kubernetes**: Always visible at the end of the prompt in bright blue with format: `on 󱃾 context (namespace)`
+  - Uses default Starship format with all standard modules
   - **GCloud**: Disabled (account info hidden)
-  - **Nerd Font symbols**: Uses Nerd Font glyphs (requires Iosevka Nerd Font or similar in terminal)
+  - **Kubernetes**: Enabled (shows context and namespace when connected to a cluster)
   - To customize: Edit `programs.starship.settings` in `modules/home-manager/zsh/default.nix`
+  - [Starship configuration docs](https://starship.rs/config/)
 - **GUI App Environment**: `launchd.user.envVariables.PATH` configured to include Homebrew and Nix paths so GUI apps (like Lens) can find command-line tools
 - **Homebrew on Activation**: Both `onActivation.autoUpdate = true` and `onActivation.upgrade = true` in `modules/darwin/apps.nix` - automatically updates package lists and upgrades all Homebrew packages when running `darwin-rebuild switch`
 - **PATH Configuration**: `home.sessionPath` includes `/opt/homebrew/share/google-cloud-sdk/bin` for Google Cloud SDK components like `gke-gcloud-auth-plugin`

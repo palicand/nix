@@ -97,35 +97,12 @@
       # Available presets: bracketed-segments, gruvbox-rainbow, jetpack, nerd-font-symbols,
       #                    no-runtime-versions, pastel-powerline, plain-text-symbols, pure-preset, tokyo-night
       settings = {
-        # Custom format - put kubernetes at the end, input on new line
-        format = "$directory$git_branch$git_status$kubernetes\n$character";
-
+        # Use default Starship format (includes all standard modules)
         # Disable GCP account display
         gcloud.disabled = true;
 
-        # Always show Kubernetes context in bright blue (at the end)
-        kubernetes = {
-          disabled = false;
-          format = "on [󱃾 $context \\($namespace\\)](bright-blue) ";
-          symbol = "󱃾 ";
-        };
-
-        # Show current directory everywhere (not just in git repos)
-        directory = {
-          disabled = false;
-          truncation_length = 3;
-          truncate_to_repo = false;
-          read_only = " 󰌾";
-        };
-
-        # Show git status
-        git_branch = {
-          disabled = false;
-        };
-
-        git_status = {
-          disabled = false;
-        };
+        # Enable Kubernetes context display
+        kubernetes.disabled = false;
       };
     };
 

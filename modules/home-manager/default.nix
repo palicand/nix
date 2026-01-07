@@ -18,6 +18,15 @@
       path = "${config.home.homeDirectory}/.nixpkgs/modules/home-manager";
     };
 
+    # CLI tools with declarative configuration
+    ripgrep.enable = true;
+    jq.enable = true;
+    poetry.enable = true;
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
+
     tmux = {
       enable = true;
       clock24 = true;
@@ -187,11 +196,8 @@
       # Terminal & CLI tools
       wget
       yadm
-      ripgrep
       bandwhich
       postgresql_14
-      poetry
-      jq
       gawk
       rsync
       tree
@@ -221,6 +227,7 @@
       nixfmt
       nixfmt-tree # Official Nix formatter using treefmt
       nixd
+      ncdu
     ];
   };
 }
