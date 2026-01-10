@@ -96,6 +96,11 @@ nix shell nixpkgs#<package-name>
 
 # Run package without installing
 nix run nixpkgs#<package-name>
+
+# Temporary shell with multiple packages (custom command)
+nix-temp jq ripgrep fd
+# Automatically prepends nixpkgs# to package names
+# Supports explicit flake references: nix-temp jq github:owner/repo#pkg
 ```
 
 ### Garbage Collection
@@ -150,6 +155,7 @@ The repository uses a layered module architecture:
    - macOS application linking activation script
 
 6. **Specialized modules**:
+   - `modules/home-manager/shared.nix`: Shared shell configuration (aliases and PATH) imported by both Fish and Zsh
    - `modules/home-manager/zsh/default.nix`: Zsh shell configuration (starship prompt, fzf, neovim, oh-my-zsh plugins)
    - `modules/home-manager/git/default.nix`: Git configuration with enhanced worktree workflow (`wt`, `cwt` aliases)
    - `modules/home-manager/fish/default.nix`: Fish shell configuration (now the default shell, plugin-git for auto g* abbreviations)
@@ -208,11 +214,23 @@ Modify `modules/darwin/apps.nix`:
 
 ### Modifying Shell Configuration
 
-Edit `modules/home-manager/zsh/default.nix` for Zsh or `modules/home-manager/fish/default.nix` for Fish:
-- **Zsh**: Shell aliases in `programs.zsh.shellAliases`, environment variables in `programs.zsh.localVariables`, initialization in `programs.zsh.initContent`
-- **Fish**: Shell aliases in `programs.fish.shellAliases`, environment variables and initialization in `programs.fish.interactiveShellInit`
-- **PATH**: Add directories to `home.sessionPath` in either module (shared across shells)
+**Shared configuration** (applies to both Fish and Zsh):
+- Edit `modules/home-manager/shared.nix` for aliases and PATH that should work in both shells
+- `aliases` - Attribute set of shell aliases (e.g., `grep = "rg"`)
+- `sessionPath` - List of directories to add to PATH
+
+**Shell-specific configuration**:
+- **Zsh**: `modules/home-manager/zsh/default.nix` - environment variables in `programs.zsh.localVariables`, initialization in `programs.zsh.initContent`
+- **Fish**: `modules/home-manager/fish/default.nix` - environment variables and initialization in `programs.fish.shellInit` or `interactiveShellInit`
 - **Starship Prompt**: Edit `programs.starship.settings` in `modules/home-manager/zsh/default.nix` (works for both Fish and Zsh)
+
+**Adding shell-specific PATH entries**:
+```nix
+# In zsh/default.nix - extends shared paths
+home.sessionPath = shared.sessionPath ++ [
+  "$HOME/.antigravity/antigravity/bin"
+];
+```
 
 ### Customizing Starship Prompt
 
@@ -279,7 +297,7 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
 - **Default Shell**: Fish (configured in `modules/common.nix`)
 - **Alternative Shells**: Zsh is still configured and available
 - **Python Environment**: Python 3.13.9 with ipython, asyncpg, and requests
-- **Shell Aliases**:
+- **Shell Aliases** (defined in `modules/home-manager/shared.nix`, shared by Fish and Zsh):
   - `rebuild` → `sudo darwin-rebuild switch --flake ~/.nixpkgs` (requires sudo for system activation)
   - `update-all` → `nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs` (updates all flakes and rebuilds)
   - `check-updates` → Preview what would change when updating (updates flake.lock, shows packages to build/fetch with sizes, no building). **Note**: Requires GNU AWK (gawk) for advanced regex features - see awk alias below.
@@ -290,6 +308,8 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
   - `ll` → `ls -lah --color=auto` (long listing with colors)
   - `cp` → `cp --reflink=auto` (use copy-on-write when possible)
   - `k` → `kubectl`
+- **Shell Functions** (defined in each shell's config, same behavior):
+  - `nix-temp <pkg>...` → Launch temporary shell with packages (auto-prepends `nixpkgs#`)
 - **Fish Shell Configuration**:
   - Welcome message disabled via `set -g fish_greeting` in `modules/home-manager/fish/default.nix`
   - Tab completion paths fixed via `conf.d/zzz_completion_paths.fish` - adds Fish built-ins (1000+ commands) and Homebrew paths that home-manager doesn't include by default
