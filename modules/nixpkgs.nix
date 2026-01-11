@@ -6,8 +6,8 @@
   nix = {
     package = pkgs.nix;
     extraOptions = ''
-      keep-outputs = true
-      keep-derivations = true
+      keep-outputs = false
+      keep-derivations = false
       experimental-features = nix-command flakes
     '';
     gc = {
