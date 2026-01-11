@@ -174,6 +174,10 @@ Profiles compose modules for specific use cases:
 - **Input Following**: Both home-manager and nix-darwin follow the same nixpkgs input for consistency
 - **Single nixpkgs**: Uses nixpkgs unstable channel exclusively for all packages
 - **Platform Abstraction**: `homePrefix` function handles /Users (macOS) vs /home (Linux) paths
+- **Module Boundaries**: Put things in the right place:
+  - **nix-darwin** (`modules/darwin/`): macOS system features - launchd agents, system defaults, Homebrew, fonts, system packages
+  - **home-manager** (`modules/home-manager/`): User environment - shell config, dotfiles, user packages, program settings
+  - Rule of thumb: If it's a macOS-specific system feature (like launchd), use darwin. If it's user/shell configuration that could work on any system, use home-manager.
 
 ## Common Modifications
 
@@ -230,6 +234,56 @@ Modify `modules/darwin/apps.nix`:
 home.sessionPath = shared.sessionPath ++ [
   "$HOME/.antigravity/antigravity/bin"
 ];
+```
+
+### Scheduling Tasks with launchd
+
+Use `launchd.user.agents` in nix-darwin to schedule periodic tasks on macOS. Configuration lives in `modules/darwin/default.nix`.
+
+**Weekly schedule example** (backup script):
+```nix
+launchd.user.agents.weekly-backup = {
+  command = "/path/to/backup-script.sh";
+  serviceConfig = {
+    StartCalendarInterval = [{
+      Weekday = 0;  # 0=Sunday, 1=Monday, etc.
+      Hour = 15;    # 3:00 PM
+      Minute = 0;
+    }];
+    StandardOutPath = "/Users/palicand/.local/log/backup.log";
+    StandardErrorPath = "/Users/palicand/.local/log/backup.error.log";
+  };
+};
+```
+
+**Daily schedule example** (run every 24 hours):
+```nix
+launchd.user.agents.my-task = {
+  command = "/path/to/script";
+  serviceConfig = {
+    StartInterval = 86400;  # seconds (86400 = 24 hours)
+  };
+};
+```
+
+**Key serviceConfig options** (see `man launchd.plist` for full reference):
+- `StartInterval` - Run every N seconds (simple interval)
+- `StartCalendarInterval` - Run at specific times (cron-like)
+  - `Weekday` (0-6), `Month` (1-12), `Day` (1-31), `Hour` (0-23), `Minute` (0-59)
+- `StandardOutPath` / `StandardErrorPath` - Log file paths
+- `KeepAlive` - Restart if the process exits
+- `RunAtLoad` - Run immediately when loaded
+
+**Managing agents after rebuild:**
+```bash
+# List user agents
+launchctl list | grep org.nixos
+
+# Manually trigger an agent
+launchctl start org.nixos.weekly-backup
+
+# View agent status
+launchctl print gui/$(id -u)/org.nixos.weekly-backup
 ```
 
 ### Customizing Starship Prompt
@@ -310,6 +364,10 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
   - `k` → `kubectl`
 - **Shell Functions** (defined in each shell's config, same behavior):
   - `nix-temp <pkg>...` → Launch temporary shell with packages (auto-prepends `nixpkgs#`)
+- **Command-not-found**: When typing an unknown command, suggests which Nix package provides it
+  - Uses pre-built database from `nix-index-database` flake (no manual `nix-index` needed)
+  - Database updates automatically when flake inputs are updated via `nix flake update`
+  - Integrated via `home-manager.sharedModules` in `flake.nix`
 - **Fish Shell Configuration**:
   - Welcome message disabled via `set -g fish_greeting` in `modules/home-manager/fish/default.nix`
   - Tab completion paths fixed via `conf.d/zzz_completion_paths.fish` - adds Fish built-ins (1000+ commands) and Homebrew paths that home-manager doesn't include by default

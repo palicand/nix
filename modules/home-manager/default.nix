@@ -86,6 +86,15 @@
         };
       };
     };
+
+    # Command-not-found suggestions using nix-index
+    # Uses pre-built database from nix-index-database flake (no manual nix-index needed)
+    # The nix-index-database module is imported at the flake level
+    nix-index = {
+      enable = true;
+      enableFishIntegration = true;
+      enableZshIntegration = true;
+    };
   };
 
   xdg.configFile = {

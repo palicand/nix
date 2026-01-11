@@ -24,6 +24,12 @@
       url = "github:zhaofengli/nix-homebrew";
     };
 
+    # Pre-built nix-index database for command-not-found
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Homebrew taps
     homebrew-bundle = {
       url = "github:homebrew/homebrew-bundle";
@@ -43,6 +49,7 @@
       home-manager,
       pre-commit-hooks,
       nix-homebrew,
+      nix-index-database,
       homebrew-bundle,
       homebrew-services,
       ...
@@ -65,7 +72,17 @@
         }:
         darwinSystem {
           inherit system;
-          modules = baseModules ++ extraModules;
+          modules =
+            baseModules
+            ++ extraModules
+            ++ [
+              # Import nix-index-database for command-not-found with pre-built database
+              {
+                home-manager.sharedModules = [
+                  nix-index-database.homeModules.nix-index
+                ];
+              }
+            ];
           specialArgs = { inherit inputs nixpkgs; };
         };
 
