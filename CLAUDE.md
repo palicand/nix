@@ -29,45 +29,11 @@ nix store diff-closures /run/current-system ./result
 update-all
 
 # Preview what would change when updating (without building)
+# Shows packages to build/download with sizes, updates flake.lock only
 check-updates
 ```
 
-### Previewing Updates
-
-The `check-updates` command shows what packages would be updated when running `update-all`, without actually building anything:
-
-```bash
-check-updates
-```
-
-**Output includes:**
-- List of packages that would be built from source
-- List of packages that would be downloaded (pre-built binaries)
-- Total download size and unpacked size
-- Package count summary
-
-**How it works:**
-1. Updates `flake.lock` (fast, shows which inputs changed)
-2. Runs `nix build --dry-run` to determine what would be built/downloaded
-3. Parses output to show clean package names (without `/nix/store/` paths)
-4. Displays totals without actually downloading or building
-
-**When to use:**
-- Before running `update-all` to see scope of changes
-- To check if critical packages would be rebuilt
-- To estimate download size on metered connections
-
-**Future enhancement (per-package sizes):**
-For detailed per-package size estimates (slower, requires querying each package individually):
-```bash
-# This approach is not implemented by default due to performance cost
-nix flake update --flake ~/.nixpkgs && \
-  nix build --dry-run --json --no-link ~/.nixpkgs#darwinConfigurations.uber-mac.system | \
-  jq -r '.[] | .drvPath' | \
-  xargs -n1 nix derivation show | \
-  jq -r 'to_entries[] | .value.outputs.out.path' | \
-  xargs nix path-info --closure-size
-```
+**About `check-updates`**: Runs `nix flake update` then `nix build --dry-run` to show what packages would be built from source or downloaded (with sizes), without actually building anything. Use before `update-all` to see scope of changes and estimate download size.
 
 ### Flake Management
 
@@ -128,38 +94,14 @@ The `flake.nix` is the entry point that orchestrates the entire configuration:
 
 ### Module System
 
-The repository uses a layered module architecture:
+Layered module architecture:
 
-1. **modules/primary.nix**: Defines `user` and `hm` (home-manager) option aliases, allowing shorthand config like `user.name` instead of `users.users.<name>.name`
-
-2. **modules/common.nix**: Shared configuration imported by both Darwin and home-manager
-   - Essential system utilities only (coreutils-full, curl, wget, git)
-   - User shell configuration (fish as default)
-   - Home-manager bootstrap with global nixpkgs
-
-3. **modules/darwin/default.nix**: Darwin-specific base configuration
-   - System settings (stateVersion, primaryUser)
-   - Zsh configuration
-   - nixpkgs.config (allowUnfree, allowBroken, allowUnsupportedSystem)
-   - Documentation disabled for performance
-
-4. **modules/darwin/apps.nix**: Homebrew configuration for GUI apps
-   - Casks: JetBrains Toolbox, VS Code, Firefox, Spotify, Signal, Slack, etc.
-   - Brews: gnupg2, pinentry-mac
-
-5. **modules/home-manager/default.nix**: Home-manager user environment
-   - Imports CLI, git, and fish configurations
-   - Defines user packages (rust tooling, kubernetes tools, nodejs, terraform, etc.)
-   - Python3 with packages: ipython, asyncpg, requests
-   - Tmux configuration with plugins (cpu, resurrect)
-   - macOS application linking activation script
-
-6. **Specialized modules**:
-   - `modules/home-manager/shared.nix`: Shared shell configuration (aliases and PATH) imported by both Fish and Zsh
-   - `modules/home-manager/zsh/default.nix`: Zsh shell configuration (starship prompt, fzf, neovim, oh-my-zsh plugins)
-   - `modules/home-manager/git/default.nix`: Git configuration with enhanced worktree workflow (`wt`, `cwt` aliases)
-   - `modules/home-manager/fish/default.nix`: Fish shell configuration (now the default shell, plugin-git for auto g* abbreviations)
-   - `modules/darwin/charging-chime.nix`: Charging chime toggle module
+1. **modules/primary.nix**: Defines `user` and `hm` option aliases for shorthand config
+2. **modules/common.nix**: Shared configuration (essential utilities, shell config, home-manager bootstrap)
+3. **modules/darwin/default.nix**: Darwin base (system settings, zsh, nixpkgs.config)
+4. **modules/darwin/apps.nix**: Homebrew casks and brews
+5. **modules/home-manager/default.nix**: User environment (packages, python, tmux, app linking)
+6. **Specialized modules**: shared.nix (shell aliases/PATH), zsh/default.nix, fish/default.nix, git/default.nix (worktree workflow), charging-chime.nix
 
 ### Profile System
 
@@ -187,28 +129,13 @@ Add to `modules/common.nix` under `environment.systemPackages` for essential sys
 
 ### Adding Python Packages
 
-To add Python packages globally:
-1. Edit `modules/home-manager/default.nix`
-2. Find the `python3.withPackages` expression (around line 107)
-3. Add the package name to the list within the `with ps;` block
-4. **IMPORTANT**: Also add it to the wrapper scripts (lines 114-119) to keep them in sync
-5. Run `darwin-rebuild switch --flake ~/.nixpkgs` to apply changes
+Edit `modules/home-manager/default.nix`:
+1. Find the `python3.withPackages` expression (around line 107)
+2. Add package name to the list within the `with ps;` block
+3. **Important**: Also add it to the wrapper scripts (lines 114-119) to keep them in sync
+4. Run `darwin-rebuild switch --flake ~/.nixpkgs`
 
-Example:
-```nix
-(python3.withPackages (ps: with ps; [
-  ipython
-  asyncpg
-  requests  # Added package
-]))
-
-# Also update the wrapper scripts:
-(pkgs.writeShellScriptBin "python3-wrapper" ''
-  exec ${pkgs.python3.withPackages (ps: with ps; [ ipython asyncpg requests ])}/bin/python3.13 "$@"
-'')
-```
-
-**Why wrapper scripts are needed**: The `python3` symlink in Nix Python environments has a known issue where it doesn't properly initialize `sys.path`, causing it to use the base Python libraries instead of the environment with your installed packages. The `python3.13` binary works correctly, so we use wrapper scripts that call it directly. Shell aliases (`python3` → `python3-wrapper`) make this transparent.
+**Why wrapper scripts**: The `python3` symlink doesn't properly initialize `sys.path`. Wrapper scripts execute `python3.13` directly (which works correctly), made transparent via shell aliases.
 
 ### Adding Homebrew Apps
 
@@ -238,86 +165,26 @@ home.sessionPath = shared.sessionPath ++ [
 
 ### Scheduling Tasks with launchd
 
-Use `launchd.user.agents` in nix-darwin to schedule periodic tasks on macOS. Configuration lives in `modules/darwin/default.nix`.
+Use `launchd.user.agents` in `modules/darwin/default.nix` to schedule periodic tasks on macOS.
 
-**Weekly schedule example** (backup script):
-```nix
-launchd.user.agents.weekly-backup = {
-  command = "/path/to/backup-script.sh";
-  serviceConfig = {
-    StartCalendarInterval = [{
-      Weekday = 0;  # 0=Sunday, 1=Monday, etc.
-      Hour = 15;    # 3:00 PM
-      Minute = 0;
-    }];
-    StandardOutPath = "/Users/palicand/.local/log/backup.log";
-    StandardErrorPath = "/Users/palicand/.local/log/backup.error.log";
-  };
-};
-```
-
-**Daily schedule example** (run every 24 hours):
-```nix
-launchd.user.agents.my-task = {
-  command = "/path/to/script";
-  serviceConfig = {
-    StartInterval = 86400;  # seconds (86400 = 24 hours)
-  };
-};
-```
-
-**Key serviceConfig options** (see `man launchd.plist` for full reference):
-- `StartInterval` - Run every N seconds (simple interval)
-- `StartCalendarInterval` - Run at specific times (cron-like)
-  - `Weekday` (0-6), `Month` (1-12), `Day` (1-31), `Hour` (0-23), `Minute` (0-59)
+**Key serviceConfig options** (see `man launchd.plist`):
+- `StartInterval` - Run every N seconds (e.g., 86400 for daily)
+- `StartCalendarInterval` - Cron-like scheduling with Weekday (0-6), Month (1-12), Day (1-31), Hour (0-23), Minute (0-59)
 - `StandardOutPath` / `StandardErrorPath` - Log file paths
-- `KeepAlive` - Restart if the process exits
+- `KeepAlive` - Restart if process exits
 - `RunAtLoad` - Run immediately when loaded
 
-**Managing agents after rebuild:**
-```bash
-# List user agents
-launchctl list | grep org.nixos
-
-# Manually trigger an agent
-launchctl start org.nixos.weekly-backup
-
-# View agent status
-launchctl print gui/$(id -u)/org.nixos.weekly-backup
-```
+**Managing agents**: Use `launchctl list | grep org.nixos`, `launchctl start org.nixos.<name>`, or `launchctl print gui/$(id -u)/org.nixos.<name>` to manage agents.
 
 ### Customizing Starship Prompt
 
-Starship prompt configuration is defined in `modules/home-manager/zsh/default.nix` under `programs.starship.settings` and works for both Fish and Zsh shells.
+Configured in `modules/home-manager/zsh/default.nix` under `programs.starship.settings` (works for both Fish and Zsh).
 
-**Current configuration:**
-- Two-line format: `$directory$git_branch$git_status$kubernetes\n$character`
-- Kubernetes context at the end in bright blue
-- GCloud module disabled
-- Directory always visible (not collapsed to repo)
+**Current**: Two-line format with directory, git, kubernetes. GCloud disabled, directory always visible.
 
-**To customize colors, format, or add modules:**
+**To customize**: Edit `programs.starship.settings` in `modules/home-manager/zsh/default.nix`, then rebuild.
 
-1. Edit `modules/home-manager/zsh/default.nix`
-2. Modify the `programs.starship.settings` block
-3. Run `darwin-rebuild switch --flake ~/.nixpkgs`
-
-**Example - Change Kubernetes color:**
-```nix
-kubernetes = {
-  disabled = false;
-  format = "on [󱃾 $context \\($namespace\\)](cyan) ";  # Change to cyan
-};
-```
-
-**Example - Add more modules to the prompt:**
-```nix
-format = "$directory$git_branch$git_status$docker_context$kubernetes\n$character";
-```
-
-**Useful resources:**
-- [Starship configuration documentation](https://starship.rs/config/)
-- [Starship presets](https://starship.rs/presets/) - Pre-made themes you can use
+**Resources**: [Starship docs](https://starship.rs/config/), [Presets](https://starship.rs/presets/)
 
 ### Changing User Settings
 
@@ -327,21 +194,13 @@ The primary user is "palicand" defined in:
 
 ### Configuring Charging Chime
 
-The `modules/darwin/charging-chime.nix` module provides a toggle for the macOS charging alert sound.
-
-**Usage:**
-Edit `modules/darwin/default.nix` and set:
+Toggle macOS charging alert sound in `modules/darwin/default.nix`:
 ```nix
-system.chargingChime.enable = false;  # Disable the charging sound
-system.chargingChime.enable = true;   # Enable the charging sound (default)
+system.chargingChime.enable = false;  # Disable (current setting)
+system.chargingChime.enable = true;   # Enable
 ```
 
-**How it works:**
-- When `enable = false`: Sets `com.apple.PowerChime.ChimeOnNoHardware = true` and kills the PowerChime process
-- When `enable = true`: Sets `com.apple.PowerChime.ChimeOnNoHardware = false` and starts PowerChime.app
-- The activation script runs automatically during each `darwin-rebuild switch`
-
-**Current configuration:** Disabled (`system.chargingChime.enable = false` in `modules/darwin/default.nix:71`)
+Activation script runs automatically during `darwin-rebuild switch`.
 
 ## Important Configuration Details
 
@@ -350,20 +209,9 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
 - **Experimental Features**: nix-command and flakes enabled
 - **Default Shell**: Fish (configured in `modules/common.nix`)
 - **Alternative Shells**: Zsh is still configured and available
-- **Python Environment**: Python 3.13.9 with ipython, asyncpg, and requests
-- **Shell Aliases** (defined in `modules/home-manager/shared.nix`, shared by Fish and Zsh):
-  - `rebuild` → `sudo darwin-rebuild switch --flake ~/.nixpkgs` (requires sudo for system activation)
-  - `update-all` → `nix flake update --flake ~/.nixpkgs && sudo darwin-rebuild switch --flake ~/.nixpkgs` (updates all flakes and rebuilds)
-  - `check-updates` → Preview what would change when updating (updates flake.lock, shows packages to build/fetch with sizes, no building). **Note**: Requires GNU AWK (gawk) for advanced regex features - see awk alias below.
-  - `grep` → `rg` (ripgrep)
-  - `cat` → `bat`
-  - `awk` → `gawk` (GNU AWK - supports advanced regex features like array capture in match(), used by check-updates command)
-  - `ls` → `ls --color=auto` (GNU ls with colors)
-  - `ll` → `ls -lah --color=auto` (long listing with colors)
-  - `cp` → `cp --reflink=auto` (use copy-on-write when possible)
-  - `k` → `kubectl`
-- **Shell Functions** (defined in each shell's config, same behavior):
-  - `nix-temp <pkg>...` → Launch temporary shell with packages (auto-prepends `nixpkgs#`)
+- **Python Environment**: Python 3 with ipython, asyncpg, and requests (managed via `python3.withPackages`)
+- **Shell Aliases**: Common aliases defined in `modules/home-manager/shared.nix` include `rebuild`, `update-all`, `check-updates`, `grep→rg`, `cat→bat`, `ls/ll` with colors, `k→kubectl`, and `nix-temp` function for temporary package shells
+- **Command Aliases Note**: `check-updates` requires GNU AWK (gawk); `awk` is aliased to `gawk` for this purpose
 - **Command-not-found**: When typing an unknown command, suggests which Nix package provides it
   - Uses pre-built database from `nix-index-database` flake (no manual `nix-index` needed)
   - Database updates automatically when flake inputs are updated via `nix flake update`
@@ -378,12 +226,7 @@ system.chargingChime.enable = true;   # Enable the charging sound (default)
     - Settings: fuzzy search mode, global filter, compact style, no cloud sync (privacy)
     - Makes command history truly predictive based on your actual usage
   - **plugin-git**: Automatically creates `g*` abbreviations for all git aliases (like oh-my-zsh git plugin does for Zsh)
-- **Starship Prompt Configuration** (configured in `modules/home-manager/zsh/default.nix` - works for both Fish and Zsh):
-  - Uses default Starship format with all standard modules
-  - **GCloud**: Disabled (account info hidden)
-  - **Kubernetes**: Enabled (shows context and namespace when connected to a cluster)
-  - To customize: Edit `programs.starship.settings` in `modules/home-manager/zsh/default.nix`
-  - [Starship configuration docs](https://starship.rs/config/)
+- **Starship Prompt**: Configured in `modules/home-manager/zsh/default.nix`, works for both Fish and Zsh. See "Customizing Starship Prompt" section for details.
 - **GUI App Environment**: `launchd.user.envVariables.PATH` configured to include Homebrew and Nix paths so GUI apps (like Lens) can find command-line tools
 - **Homebrew on Activation**: Both `onActivation.autoUpdate = true` and `onActivation.upgrade = true` in `modules/darwin/apps.nix` - automatically updates package lists and upgrades all Homebrew packages when running `darwin-rebuild switch`
 - **PATH Configuration**: `home.sessionPath` includes `/opt/homebrew/share/google-cloud-sdk/bin` for Google Cloud SDK components like `gke-gcloud-auth-plugin`
@@ -443,20 +286,9 @@ gcwt extension-error BKBN-3828-my-feature
 # Creates worktree, copies configs, and immediately cd's into it
 ```
 
-This is particularly useful for:
-- Testing features in isolation with separate environment configs
-- Working on multiple branches simultaneously
-- Quick context switching without stashing changes
+**Use cases**: Testing features in isolation with separate environment configs, working on multiple branches simultaneously, quick context switching without stashing changes.
 
-### Implementation Notes
-
-- The `git wt` and `git cwt` aliases are defined in `modules/home-manager/git/default.nix`
-- The `gcwt` shell function is defined in `modules/home-manager/zsh/default.nix` (Zsh) and `modules/home-manager/fish/default.nix` (Fish)
-- **Automatic g* abbreviations**:
-  - **Zsh**: oh-my-zsh git plugin automatically creates `gwt` and `gcwt` from git aliases
-  - **Fish**: plugin-git (installed via `fishPlugins.plugin-git`) automatically creates abbreviations for all git aliases
-- **Important**: Git aliases in Nix must be single-line strings, not multiline. Use semicolons and proper escaping.
-- **Performance**: Uses `rsync` instead of `cp` for faster copying with progress display, especially useful for projects with many config files
+**Implementation**: Git aliases defined in `modules/home-manager/git/default.nix`; `gcwt` shell function in both zsh and fish configs. The oh-my-zsh git plugin (Zsh) and plugin-git (Fish) automatically create `gwt` and `gcwt` abbreviations. Note: Git aliases in Nix must be single-line strings (use semicolons, not newlines).
 
 ## Notable Packages
 
@@ -474,91 +306,32 @@ This is particularly useful for:
 
 ## Homebrew Management
 
-This configuration uses a two-part approach for Homebrew management:
+**Two-part approach**:
+- **nix-homebrew**: Manages Homebrew installation and taps (configured in `flake.nix`). Taps are pinned via flake inputs for reproducibility. Current taps: homebrew/bundle, homebrew/services.
+- **nix-darwin homebrew module**: Manages packages (brews, casks, Mac App Store apps) in `modules/darwin/apps.nix`. Auto-updates packages on `darwin-rebuild switch`.
 
-### nix-homebrew (Homebrew Installation & Taps)
-- Manages the Homebrew installation itself
-- Declarative tap management (no manual `brew tap` commands needed)
-- Configured in `flake.nix` extraModules for uber-mac
-- Taps are pinned via flake inputs for reproducibility
+**Adding a new tap**: Add as flake input in `flake.nix` (set `flake = false`), add to `nix-homebrew.taps` configuration, then rebuild.
 
-**Current taps:**
-- homebrew/bundle (for Brewfile support)
-- homebrew/services (for service management)
-
-### nix-darwin homebrew module (Package Management)
-- Manages packages: formulas (brews), casks, and Mac App Store apps
-- Configured in `modules/darwin/apps.nix`
-- Auto-updates on `darwin-rebuild switch` (onActivation.autoUpdate = true)
-
-**To add a new tap:**
-1. Add tap as flake input in `flake.nix` (set `flake = false`)
-2. Add tap to `nix-homebrew.taps` configuration in uber-mac extraModules
-3. Rebuild with `darwin-rebuild switch`
-
-**Benefits:**
-- Reproducible tap versions via flake.lock
-- Declarative configuration (no manual tap management)
-- Auto-migration of existing Homebrew installation
-- Future-ready for Homebrew version pinning
-
-**Migration notes:**
-- During initial setup, existing `/opt/homebrew/Library/Taps` was backed up and removed
-- nix-homebrew now manages taps as read-only symlinks to /nix/store
-- Taps are owned by root and cannot be manually modified
-- `brew doctor` may show false "deprecated taps" warning - this can be ignored
+**Note**: Taps are managed as read-only symlinks to /nix/store. `brew doctor` may show false "deprecated taps" warning - ignore it.
 
 ## Nix Formatting
 
-This repository uses automated Nix formatting with pre-commit hooks.
+Automated formatting with pre-commit hooks using `pre-commit-hooks.nix`.
 
-### Automated Formatting (Pre-commit Hooks)
+**Setup**: Run `nix develop` once to install hooks. After setup, `nixfmt` and `statix` automatically run on all `.nix` files before each commit.
 
-**Setup** (one-time):
-```bash
-# Enter the development shell to install pre-commit hooks
-nix develop
-```
+**Manual commands**:
+- `nixfmt <file.nix>` - Format single file
+- `nixfmt-tree` - Format entire directory recursively
+- `statix check .` - Lint all Nix files
 
-After running `nix develop` once, the pre-commit hooks are installed and will automatically format and lint all `.nix` files before every commit.
-
-**How it works:**
-- Uses `pre-commit-hooks.nix` (Nix equivalent of Node's husky/pre-commit)
-- Configured in `flake.nix` under `devShells.aarch64-darwin.default`
-- Runs two hooks on all modified `.nix` files before each commit:
-  - `nixfmt` - Official Nix formatter (formats code)
-  - `statix` - Nix linter (checks for warnings and best practices)
-- Hooks install automatically when any developer runs `nix develop`
-
-**Manual formatting and linting:**
-```bash
-# Format a single file
-nixfmt <file.nix>
-
-# Format entire directory recursively (uses treefmt wrapper)
-nixfmt-tree
-
-# Lint all Nix files in the current directory
-statix check .
-
-# All tools are available in home.packages
-```
-
-**Key differences:**
-- `nixfmt` - The actual Nix formatter binary (formats individual files)
-- `nixfmt-tree` - A treefmt wrapper pre-configured for recursive directory formatting
-- `statix` - Nix linter that checks for warnings and suggests best practices
-- Pre-commit hooks use `nixfmt` and `statix check` since they receive individual filenames
-
-**References:**
-- [NixOS/nixfmt - Official Nix formatter](https://github.com/NixOS/nixfmt)
-- [nixfmt-tree - MyNixOS](https://mynixos.com/nixpkgs/package/nixfmt-tree)
-- [statix - Linter/fixer for Nix](https://github.com/nerdypepper/statix)
-- [Auto formatting using treefmt-nix](https://nixos.asia/en/treefmt)
+**Configuration**: Hooks configured in `flake.nix` under `devShells.aarch64-darwin.default`.
 
 ## Common Gotchas and Troubleshooting
 
-### Darwin Rebuild Requires Sudo
+### Build & System Issues
+
+#### Darwin Rebuild Requires Sudo
 
 **Important**: `darwin-rebuild switch` requires sudo for system activation as of recent nix-darwin versions.
 
@@ -577,7 +350,13 @@ sudo darwin-rebuild switch --flake ~/.nixpkgs
 
 **Exception**: `darwin-rebuild build` (without switch) does NOT require sudo since it only builds without activating the system.
 
-### Git Aliases in Nix
+#### Managing Large Package Builds
+
+When updating packages, some large derivations can take 20-30 minutes to build from source (e.g., terraform, claude-code). Be patient - the build is likely still progressing even without output. Check progress with `ps aux | /usr/bin/grep darwin-rebuild`.
+
+### Nix Configuration Issues
+
+#### Git Aliases in Nix
 
 When defining git aliases in `modules/home-manager/git/default.nix`:
 - **Must use single-line strings**: Multiline strings with `''` will create invalid gitconfig entries with literal newlines
@@ -585,21 +364,31 @@ When defining git aliases in `modules/home-manager/git/default.nix`:
 - **Join with semicolons**: Use `;` to separate shell commands instead of newlines
 - **Example**: `wt = "!f() { cmd1; cmd2; cmd3; }; f";` ✓ NOT `wt = ''...multiline...''` ✗
 
-### oh-my-zsh Plugin Conflicts
-
-The oh-my-zsh git plugin automatically creates aliases for git aliases (e.g., `gwt` from `git wt`):
-- **Problem**: This conflicts when defining functions with the same name
-- **Solution**: Add `unalias <name> 2>/dev/null || true` before function definitions
-- **Location**: `modules/home-manager/zsh/default.nix` in `initContent`
-
-### Adding New Files to Flakes
+#### Adding New Files to Flakes
 
 When creating new modules or configuration files:
 - **Must run `git add`**: Nix flakes only see files tracked by git
 - **Error symptom**: "path does not exist" even though file is present
 - **Solution**: `git add <new-file>` before running `darwin-rebuild`
 
-### Switching Default Shell
+#### Duplicate Option Definitions
+
+When importing multiple modules that configure the same programs:
+- **Problem**: "option is defined multiple times" errors
+- **Common culprits**: starship, fzf, neovim when configured in multiple places
+- **Solution**: Configure shared tools once in one shell module (e.g., `zsh/default.nix`), enable integrations in other shells
+
+#### Removing Unused Flake Inputs
+
+To clean up unused flake dependencies:
+1. Remove from `flake.nix` inputs and specialArgs
+2. Remove corresponding entries from `modules/common.nix` in `environment.etc`
+3. Run `nix flake update` to update lock file
+4. Run `darwin-rebuild switch` to apply
+
+### Shell Configuration Issues
+
+#### Switching Default Shell
 
 To change the default shell:
 1. **In Nix configuration**:
@@ -622,334 +411,74 @@ To change the default shell:
 
 **Common error**: `chsh: non-standard shell` means the shell path isn't in `/etc/shells`. Use the system path (`/run/current-system/sw/bin/fish`) which is automatically added by nix-darwin.
 
-### Duplicate Option Definitions
-
-When importing multiple modules that configure the same programs:
-- **Problem**: "option is defined multiple times" errors
-- **Common culprits**: starship, fzf, neovim when configured in multiple places
-- **Solution**: Configure shared tools once in one shell module (e.g., `zsh/default.nix`), enable integrations in other shells
-- **Example**: starship configured in zsh module, fish uses the same config automatically
-
-### Removing Unused Flake Inputs
-
-To clean up unused flake dependencies and speed up rebuilds:
-1. **Remove from inputs**: Edit `flake.nix` and remove unused input definitions
-2. **Remove specialArgs**: Remove references from `specialArgs` in `mkDarwinConfig` and `mkHomeConfig`
-3. **Remove etc sources**: Remove corresponding entries from `modules/common.nix` in `environment.etc`
-4. **Update flake lock**: Run `nix flake update` to update the lock file (will show removed inputs)
-5. **Rebuild**: Run `darwin-rebuild switch` to apply changes
-
-**Recent cleanup** (2025-12-19):
-- Removed: `stable` (nixos-23.05), `comma`, `devshell`, `flake-compat`, `flake-utils`
-- Benefit: Faster rebuilds, smaller flake.lock, no unnecessary dependency downloads
-
-### Managing Large Package Builds
-
-When updating packages, some large derivations can take 20-30 minutes to build from source:
-- **terraform**: Go modules compilation can be slow
-- **claude-code**: npm dependencies are extensive
-- **Solution**: Be patient, the build is likely still progressing even without output
-- **Check progress**: Use `ps aux | /usr/bin/grep darwin-rebuild` to verify the process is still running
-- **Background option**: Large rebuilds can be run with `run_in_background: true`
-
-### Python3 Symlink Issue
-
-**Problem**: The `python3` command doesn't find installed packages (like `requests`, `ipython`), but `python3.13` works correctly.
-
-**Root cause**: The `python3` symlink in Nix Python environments doesn't properly initialize `sys.path`. When executed, it uses the base Python's site-packages instead of the environment with your installed packages.
-
-**Symptoms**:
-```bash
-python3 -c "import requests"  # ModuleNotFoundError
-python3.13 -c "import requests"  # Works fine
-```
-
-**Solution implemented** (2025-12-19):
-1. Created wrapper scripts in `modules/home-manager/default.nix`:
-   - `python3-wrapper` - Executes `python3.13` with correct environment
-   - `python-wrapper` - Same for `python` command
-2. Added shell aliases in both Fish and Zsh configurations:
-   - `python` → `python-wrapper`
-   - `python3` → `python3-wrapper`
-3. Result: `python3` command now works correctly in interactive shells
-
-**Technical details**:
-- Direct execution: `/nix/store/.../python3-3.13.9-env/bin/python3.13` ✅ Works
-- Symlink execution: `/nix/store/.../python3-3.13.9-env/bin/python3` ❌ Broken `sys.path`
-- Wrapper script: Shell script that `exec`s `python3.13` ✅ Works everywhere
-
-**When adding new Python packages**: Update both the `withPackages` list AND the wrapper scripts to keep them in sync (see "Adding Python Packages" section).
-
-### Homebrew Deprecated Taps
-
-**Problem**: Homebrew deprecated `homebrew/cask-fonts` and `homebrew/cask-versions` taps (merged into main `homebrew/cask` tap). If these taps are listed in your Nix configuration, `brew update` will fail with errors like:
-```
-Error: homebrew/homebrew-cask-versions does not exist! Run `brew untap homebrew/homebrew-cask-versions` to remove it.
-Error: homebrew/homebrew-cask-fonts does not exist! Run `brew untap homebrew/homebrew-cask-fonts` to remove it.
-```
-
-**Root cause**:
-1. Nix-darwin manages Homebrew taps via `modules/darwin/apps.nix` in the `homebrew.taps` list
-2. The deprecated taps were included in the configuration
-3. Homebrew can't untap them if casks are still installed from those taps (e.g., font-iosevka-nerd-font)
-
-**Solution** (2025-12-21):
-1. **Migrate installed casks**: If you have fonts or versioned casks installed from the old taps:
-   ```bash
-   # Reinstall to migrate from old tap to new location
-   brew reinstall --cask font-iosevka-nerd-font
-   ```
-
-2. **Force untap if needed**: If Homebrew still refuses to untap:
-   ```bash
-   brew untap --force homebrew/cask-fonts
-   brew untap --force homebrew/cask-versions
-   ```
-
-3. **Remove from Nix config**: Edit `modules/darwin/apps.nix` and remove the deprecated taps from `homebrew.taps`:
-   ```nix
-   taps = [
-     "homebrew/bundle"
-     "homebrew/services"
-     # Removed: "homebrew/cask-fonts" (deprecated)
-     # Removed: "homebrew/cask-versions" (deprecated)
-   ];
-   ```
-
-4. **Rebuild**: Run `darwin-rebuild switch --flake ~/.nixpkgs` to apply changes
-
-**Current supported taps**:
-- `homebrew/bundle` - For Brewfile support
-- `homebrew/services` - For service management
-
-**Note**: Fonts and versioned casks are now available directly through `homebrew/cask` without needing separate taps.
-
-### Fish Shell Completions
-
-**Issue**: Tab completions don't work for some commands (brew, gradle, gradlew) in Fish shell.
-
-**Root Cause** (2025-12-28):
-
-**Generated completions shadow real ones**:
-- home-manager's `generateCompletions` option (default: enabled) creates simple completions from man pages
-- Fish's `fish_update_completions` command also generates a cache in `~/.cache/fish/generated_completions/`
-- Generated completions are basic `complete -c` commands without helper functions
-- Real completion files (like brew.fish, gradle.fish) define helper functions that are required for completions to work
-- Generated completions appear early in `fish_complete_path`, shadowing the real ones
-- Fish loads the generated file and stops → helper functions never get defined → completions fail
-
-**Solution** (2025-12-28):
-
-**Step 1**: Disable generated completions in `modules/home-manager/fish/default.nix`:
-```nix
-programs.fish = {
-  enable = true;
-  generateCompletions = false;  # Disable - generated completions shadow real ones with helper functions
-  # ...
-};
-```
-
-**Step 2**: Add completion paths in `modules/home-manager/default.nix` with correct priority:
-```nix
-"fish/conf.d/zzz_completion_paths.fish".text = ''
-  # Add Fish's built-in completions directory (1000+ commands: git, npm, etc.)
-  set -l builtin_completions $__fish_data_dir/completions
-  if test -d $builtin_completions; and not contains $builtin_completions $fish_complete_path
-    set -ga fish_complete_path $builtin_completions
-  end
-
-  # PREPEND Homebrew completions so they take priority over Fish's placeholder files
-  # (Fish's built-in brew.fish is just a comment pointing to Homebrew's upstream)
-  if test -d /opt/homebrew/share/fish/vendor_completions.d
-    and not contains /opt/homebrew/share/fish/vendor_completions.d $fish_complete_path
-    set -p fish_complete_path /opt/homebrew/share/fish/vendor_completions.d
-  end
-'';
-
-# gradlew.fish - Load gradle.fish which provides completions for both gradle and gradlew
-"fish/completions/gradlew.fish".text = ''
-  # gradle.fish defines completions for both 'gradle' and 'gradlew' commands
-  # But Fish's lazy loading doesn't know this - it only looks for gradlew.fish when you type gradlew
-  # So we explicitly source gradle.fish to make both sets of completions available
-  set -l gradle_completion $__fish_data_dir/completions/gradle.fish
-  test -f $gradle_completion; and source $gradle_completion
-'';
-```
-
-**Step 3**: Clear Fish's generated cache (one-time):
-```bash
-rm -rf ~/.cache/fish/generated_completions/
-```
-
-**Important**: Do NOT run `fish_update_completions` - it regenerates the cache and breaks completions again.
-
-**What this fixes**:
-- ✅ Homebrew tools (brew, etc.) - real completions loaded instead of placeholders
-- ✅ Git, npm, kubectl, terraform - Fish's lazy loading works correctly
-- ✅ Gradle - Fish's gradle.fish loads with helper functions
-- ✅ Gradlew - Custom wrapper sources gradle.fish when gradlew is used
-- ✅ `./gradlew` - Works immediately in fresh shells (see below)
-
-**Why `./gradlew` needs special handling** (2026-01-01):
-- **Problem**: In fresh shells, `./gradlew <tab>` shows directories instead of Gradle tasks
-- **Root cause**: Fish's lazy loading is command-name based, not path-based
-  - Typing `gradlew` loads `gradlew.fish` completion → works
-  - Typing `./gradlew` is seen as a path, not a command → doesn't load completions
-  - After typing `gradle` once, `./gradlew` works because `gradle.fish` is already loaded
-- **Solution** (2026-01-01): Eagerly load gradle completions on shell startup
-  - Added to `conf.d/zzz_completion_paths.fish` in `modules/home-manager/default.nix`
-  - Sources `gradle.fish` during shell initialization (lines 93-100)
-  - Small performance trade-off (eager vs lazy loading) for better UX
-  - Now `./gradlew`, `gradlew`, and `gradle` all work immediately in fresh shells
-
-**Key learnings**:
-- Fish's lazy loading works perfectly when the right file is found first
-- Generated completions are problematic because they shadow real ones with helper functions
-- Use `set -p` (prepend) for Homebrew to override Fish's placeholder files
-- Some completions (gradlew) need explicit sourcing because lazy loading can't infer dependencies
-- Path-based commands like `./gradlew` don't trigger lazy loading - need eager loading for reliable completions
-
-**Sources**:
-- [Fish completions documentation](https://fishshell.com/docs/current/completions.html)
-- [home-manager fish.nix source](https://github.com/nix-community/home-manager/blob/master/modules/programs/fish.nix)
-
-### GUI App PATH Configuration
-
-**Issue**: GUI applications (like Lens) can't find command-line tools from Nix (e.g., `gke-gcloud-auth-plugin`).
-
-**Root cause**: macOS GUI apps inherit their environment from `launchd`, not from shell configurations. By default, they don't have Nix paths in their PATH.
-
-**Solution** (2025-12-26):
-Configure `launchd.user.envVariables.PATH` in `modules/darwin/default.nix`:
-
-```nix
-# Set PATH for GUI applications (like Lens) so they can find Nix-managed binaries
-launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:${config.environment.systemPath}";
-```
-
-This sets the PATH environment variable in your user's launchd environment, making Nix-managed tools available to all GUI apps.
-
-**Important**: After applying this change, you must **log out and log back in** (or reboot) for launchd environment changes to take effect.
-
-### Shell Color Configuration
-
-**Issue**: `ls` and `ll` commands don't show colors even though GNU ls from Nix supports `--color=auto`.
-
-**Root cause**: `LS_COLORS` was set to BSD/macOS format (`ExFxBxDxCxegedabagacad`), but GNU ls requires a different format.
-
-**Solution** (2025-12-26):
-Set proper GNU `LS_COLORS` in `modules/home-manager/fish/default.nix`:
-
-```fish
-# GNU ls color settings (not BSD LSCOLORS format)
-set -gx LS_COLORS 'di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
-```
-
-This uses the GNU format where:
-- `di=34` - directories in blue
-- `ln=35` - symlinks in magenta
-- `ex=31` - executables in red
-- etc.
-
-Combined with shell aliases (`ls = "ls --color=auto"`), this provides colored output for both `ls` and `ll` commands.
-
-### Google Cloud SDK / gsutil Cryptography Error
-
-**Issue**: Running `gsutil` commands fails with error: `module 'lib' has no attribute 'EVP_MD_CTX_new'`
-
-**Root cause** (2026-01-01):
-The Nix `google-cloud-sdk` package has broken Python cryptography library bindings to OpenSSL. The FFI (Foreign Function Interface) is missing the `EVP_MD_CTX_new` function even though OpenSSL 3.6.0 should provide it. This is a known issue with how the Nix package builds the Python cryptography library.
-
-**Symptoms**:
-```bash
-gsutil cp gs://bucket/file.sql.gz ./
-# Error: module 'lib' has no attribute 'EVP_MD_CTX_new'
-
-gsutil ls
-# Error: module 'lib' has no attribute 'EVP_MD_CTX_new'
-```
-
-**Solution** (2026-01-01):
-Switch from Nix's `google-cloud-sdk` to Homebrew's `gcloud-cli` cask:
-
-1. **Remove from Nix packages** in `modules/home-manager/default.nix`:
-   ```nix
-   # Remove this line:
-   (google-cloud-sdk.withExtraComponents [google-cloud-sdk.components.gke-gcloud-auth-plugin])
-   ```
-
-2. **Add to Homebrew casks** in `modules/darwin/apps.nix`:
-   ```nix
-   casks = [
-     # ... other casks
-     "gcloud-cli"
-   ];
-   ```
-
-3. **Add Google Cloud SDK bin to PATH** in both `modules/home-manager/fish/default.nix` and `modules/home-manager/zsh/default.nix`:
-   ```nix
-   home.sessionPath = [
-     "$HOME/.npm-global/bin"
-     "$HOME/.cargo/bin"
-     "/opt/homebrew/share/google-cloud-sdk/bin"  # Add this line
-   ];
-   ```
-
-4. **Rebuild**:
-   ```bash
-   sudo darwin-rebuild switch --flake ~/.nixpkgs
-   ```
-
-5. **Restart your shell** for PATH changes to take effect (or open a new terminal)
-
-**Benefits of Homebrew version**:
-- ✅ Uses Python 3.13 with properly built cryptography bindings
-- ✅ More frequently updated (550.0.0 vs 548.0.0)
-- ✅ Better macOS integration
-- ✅ Includes all components: gcloud, gsutil, bq, gke-gcloud-auth-plugin
-
-**Verification**:
-```bash
-which gsutil  # Should show /opt/homebrew/bin/gsutil
-gsutil version  # Should work without errors
-which gke-gcloud-auth-plugin  # Should show /opt/homebrew/share/google-cloud-sdk/bin/gke-gcloud-auth-plugin
-```
-
-**Note**: The Homebrew gcloud-cli will auto-update when you run `darwin-rebuild switch` because `onActivation.autoUpdate` and `onActivation.upgrade` are both enabled.
-
-### Homebrew Package Renames
-
-**Issue**: Homebrew occasionally renames casks, which can cause warnings like `Warning: wireshark was renamed to wireshark-app`.
-
-**Root cause**: Homebrew maintainers sometimes rename packages for consistency or to avoid conflicts. When this happens, the old name is deprecated.
-
-**Solution** (2026-01-03):
-
-1. **Update the cask name** in `modules/darwin/apps.nix`:
-   ```nix
-   casks = [
-     # ...
-     "wireshark-app"  # Changed from "wireshark"
-     # ...
-   ];
-   ```
-
-2. **Rebuild the configuration**:
-   ```bash
-   sudo darwin-rebuild switch --flake ~/.nixpkgs
-   ```
-
-3. **Uninstall the old package** (if both exist):
-   ```bash
-   brew uninstall --cask wireshark
-   ```
-
-4. **Reinstall with new name**:
-   ```bash
-   brew install --cask wireshark-app
-   ```
-
-**Note**: Homebrew recognizes renamed packages and will automatically uninstall the old name when you try to remove it, then you can reinstall with the new name.
-
-**Common renamed packages**:
-- `wireshark` → `wireshark-app` (2026-01-03)
+#### oh-my-zsh Plugin Conflicts
+
+The oh-my-zsh git plugin automatically creates aliases for git aliases (e.g., `gwt` from `git wt`). This conflicts when defining functions with the same name. Solution: Add `unalias <name> 2>/dev/null || true` before function definitions in `modules/home-manager/zsh/default.nix`.
+
+#### Python3 Symlink Issue
+
+**Problem**: The `python3` command doesn't find installed packages, but `python3.13` works.
+
+**Root cause**: The `python3` symlink doesn't properly initialize `sys.path`, using base Python's site-packages instead of the environment packages.
+
+**Solution**: Created wrapper scripts (`python3-wrapper`, `python-wrapper`) in `modules/home-manager/default.nix` that execute `python3.13` directly. Shell aliases make these transparent. When adding Python packages, update both the `withPackages` list AND wrapper scripts.
+
+#### Fish Shell Completions
+
+See dedicated "Fish Shell Completions" section above for full details. Key points: Disable home-manager's `generateCompletions` (shadows real completions with helper functions), configure completion paths correctly, prepend Homebrew completions, and don't run `fish_update_completions`.
+
+#### Shell Color Configuration
+
+**Issue**: `ls` and `ll` commands don't show colors.
+
+**Root cause**: `LS_COLORS` was set to BSD/macOS format, but GNU ls requires GNU format.
+
+**Solution**: Set proper GNU `LS_COLORS` in `modules/home-manager/fish/default.nix` (e.g., `di=34:ln=35:ex=31`). Combined with shell aliases (`ls = "ls --color=auto"`), this provides colored output.
+
+#### GUI App PATH Configuration
+
+**Issue**: GUI apps (like Lens) can't find command-line tools from Nix.
+
+**Root cause**: macOS GUI apps inherit environment from `launchd`, not shell configs.
+
+**Solution**: Configure `launchd.user.envVariables.PATH` in `modules/darwin/default.nix` to include Homebrew and Nix paths. Must log out/in for launchd environment changes to take effect.
+
+### Homebrew Issues
+
+#### Homebrew Deprecated Taps
+
+**Problem**: Homebrew deprecated `homebrew/cask-fonts` and `homebrew/cask-versions` taps.
+
+**Solution**:
+1. Migrate installed casks: `brew reinstall --cask <font-name>`
+2. Force untap if needed: `brew untap --force homebrew/cask-fonts`
+3. Remove from `modules/darwin/apps.nix` under `homebrew.taps`
+4. Rebuild with `darwin-rebuild switch`
+
+Current supported taps: homebrew/bundle, homebrew/services. Fonts and versioned casks are now in `homebrew/cask`.
+
+#### Homebrew Package Renames
+
+**Issue**: Homebrew occasionally renames casks (e.g., `wireshark` → `wireshark-app`).
+
+**Solution**:
+1. Update cask name in `modules/darwin/apps.nix`
+2. Rebuild configuration: `sudo darwin-rebuild switch --flake ~/.nixpkgs`
+3. Uninstall old package: `brew uninstall --cask wireshark`
+4. Reinstall with new name: `brew install --cask wireshark-app`
+
+### Package-Specific Issues
+
+#### Google Cloud SDK / gsutil Cryptography Error
+
+**Issue**: Running `gsutil` commands fails with cryptography error.
+
+**Root cause**: Nix `google-cloud-sdk` package has broken Python cryptography library bindings to OpenSSL.
+
+**Solution**: Switch to Homebrew's `gcloud-cli` cask:
+1. Remove `google-cloud-sdk` from `modules/home-manager/default.nix`
+2. Add `gcloud-cli` to `modules/darwin/apps.nix` casks
+3. Add `/opt/homebrew/share/google-cloud-sdk/bin` to `home.sessionPath` in both fish and zsh configs
+4. Rebuild and restart shell
+
+Benefits: Properly built cryptography bindings, better macOS integration, includes all components (gcloud, gsutil, bq, gke-gcloud-auth-plugin), auto-updates with `darwin-rebuild switch`.
