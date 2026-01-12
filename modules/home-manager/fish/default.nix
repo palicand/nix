@@ -32,24 +32,27 @@ in
       shellAliases = shared.aliases;
 
       shellInit = ''
-        # Disable fish welcome message
-        set -g fish_greeting
+                # Disable fish welcome message
+                set -g fish_greeting
 
-        # Environment variables
-        set -gx LANG en_US.UTF-8
-        set -gx CLICOLOR 1
-        # GNU ls color settings (not BSD LSCOLORS format)
-        set -gx LS_COLORS 'di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
-        set -gx TERM xterm-256color
+                # Environment variables
+                set -gx LANG en_US.UTF-8
+                set -gx CLICOLOR 1
+                # GNU ls color settings (not BSD LSCOLORS format)
+                set -gx LS_COLORS 'di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
+                set -gx TERM xterm-256color
 
-        # Homebrew shell environment (macOS)
-        if test -d /opt/homebrew
-          eval (/opt/homebrew/bin/brew shellenv)
+             if test -d (brew --prefix)"/share/fish/completions"
+            set -p fish_complete_path (brew --prefix)/share/fish/completions
         end
 
-        # GPG agent for SSH
-        set -gx GPG_TTY (tty)
-        set -gx SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
+        if test -d (brew --prefix)"/share/fish/vendor_completions.d"
+            set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
+        end
+
+                # GPG agent for SSH
+                set -gx GPG_TTY (tty)
+                set -gx SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
       '';
 
       interactiveShellInit = ''
