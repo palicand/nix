@@ -1,8 +1,17 @@
 { pkgs, ... }:
 let
   shared = import ../shared.nix;
+
+  # Fetch Homebrew Fish completions from upstream
+  # nix-homebrew doesn't generate these, so we fetch directly from Homebrew's repo
+  brewFishCompletions = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/Homebrew/brew/4.5.3/completions/fish/brew.fish";
+    sha256 = "sha256-mmIIh443OwNiMwewJAuSyovyEQmeXqAaObB8tWZbPZQ=";
+  };
 in
 {
+  # Add Homebrew Fish completions (nix-homebrew doesn't generate these)
+  xdg.configFile."fish/completions/brew.fish".source = brewFishCompletions;
   home.sessionPath = shared.sessionPath;
 
   programs = {
