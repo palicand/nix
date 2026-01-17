@@ -119,7 +119,7 @@
                   "homebrew/homebrew-bundle" = homebrew-bundle;
                   "homebrew/homebrew-services" = homebrew-services;
                 };
-                mutableTaps = false;
+                mutableTaps = true;
               };
             }
             ./profiles/personal.nix

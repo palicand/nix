@@ -49,6 +49,9 @@ in
         export GPG_TTY=$(tty)
         export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
 
+        # iTerm2 shell integration
+        test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
+
         # Kubectl completion
         source <(kubectl completion zsh)
         complete -F __start_kubectl k

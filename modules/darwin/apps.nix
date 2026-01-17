@@ -8,8 +8,11 @@
   homebrew = {
 
     enable = true;
-    onActivation.autoUpdate = true;
-    onActivation.upgrade = true;
+    onActivation = {
+      autoUpdate = true;
+      upgrade = true;
+      cleanup = "zap";  # Remove packages not in config (zap also removes preferences)
+    };
     global = {
       brewfile = true;
       lockfiles = false;
@@ -27,6 +30,7 @@
       "postman"
       "gcloud-cli"
       "wireshark-app"
+      "zed"
 
       # System utilities
       "stats"
@@ -44,6 +48,7 @@
       "signal"
       "slack"
       "whatsapp"
+      "notion"
 
       # Media
       "spotify"
