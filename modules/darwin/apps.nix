@@ -11,7 +11,7 @@
     onActivation = {
       autoUpdate = true;
       upgrade = true;
-      cleanup = "zap";  # Remove packages not in config (zap also removes preferences)
+      cleanup = "zap"; # Remove packages not in config (zap also removes preferences)
     };
     global = {
       brewfile = true;

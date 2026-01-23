@@ -10,6 +10,7 @@
     ./zsh
     ./git
     ./fish
+    ./pre-commit.nix
   ];
 
   programs = {

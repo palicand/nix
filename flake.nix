@@ -15,11 +15,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    pre-commit-hooks = {
-      url = "github:cachix/pre-commit-hooks.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nix-homebrew = {
       url = "github:zhaofengli/nix-homebrew";
     };
@@ -38,7 +33,6 @@
       nixpkgs,
       darwin,
       home-manager,
-      pre-commit-hooks,
       nix-homebrew,
       nix-index-database,
       ...
@@ -117,36 +111,5 @@
       nixosConfigurations = { };
 
       homeConfigurations = { };
-
-      # Development shell with pre-commit hooks
-      devShells = {
-        aarch64-darwin.default =
-          let
-            pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-            pre-commit-check = pre-commit-hooks.lib.aarch64-darwin.run {
-              src = ./.;
-              hooks = {
-                nixfmt = {
-                  enable = true;
-                  name = "nixfmt";
-                  description = "Format Nix files with nixfmt";
-                  entry = "${pkgs.nixfmt}/bin/nixfmt";
-                  files = "\\.nix$";
-                };
-                statix = {
-                  enable = true;
-                  name = "statix";
-                  description = "Lint Nix files with statix";
-                  entry = "${pkgs.statix}/bin/statix check";
-                  files = "\\.nix$";
-                };
-              };
-            };
-          in
-          pkgs.mkShell {
-            inherit (pre-commit-check) shellHook;
-            buildInputs = pre-commit-check.enabledPackages;
-          };
-      };
     };
 }
