@@ -21,7 +21,6 @@
     # CLI tools with declarative configuration
     ripgrep.enable = true;
     jq.enable = true;
-    poetry.enable = true;
     direnv = {
       enable = true;
       nix-direnv.enable = true;
@@ -154,6 +153,11 @@
     # $ nix-env -qaP | grep wget
     stateVersion = "25.11";
 
+    sessionVariables = {
+      EDITOR = "zed --wait";
+      VISUAL = "zed --wait";
+    };
+
     activation = {
       # Skip the app management permission check (known issue on macOS)
       checkAppManagementPermission = lib.mkForce "";
@@ -167,7 +171,7 @@
 
     packages = with pkgs; [
       # Languages/Runtimes
-      (python3.withPackages (
+      (python314.withPackages (
         ps: with ps; [
           ipython
           asyncpg
@@ -178,29 +182,29 @@
       # Python3 wrapper to fix symlink issue
       (pkgs.writeShellScriptBin "python3-wrapper" ''
         exec ${
-          pkgs.python3.withPackages (
+          pkgs.python314.withPackages (
             ps: with ps; [
               ipython
               asyncpg
               requests
             ]
           )
-        }/bin/python3.13 "$@"
+        }/bin/python3.14 "$@"
       '')
       (pkgs.writeShellScriptBin "python-wrapper" ''
         exec ${
-          pkgs.python3.withPackages (
+          pkgs.python314.withPackages (
             ps: with ps; [
               ipython
               asyncpg
               requests
             ]
           )
-        }/bin/python3.13 "$@"
+        }/bin/python3.14 "$@"
       '')
 
       uv # Fast Python package installer and resolver
-      ruby
+      poetry
 
       # Terminal & CLI tools
       wget

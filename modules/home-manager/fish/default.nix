@@ -12,6 +12,15 @@ in
 {
   # Add Homebrew Fish completions (nix-homebrew doesn't generate these)
   xdg.configFile."fish/completions/brew.fish".source = brewFishCompletions;
+
+  # Ensure Nix paths come before Homebrew paths (runs last due to zzz prefix)
+  # This fixes tools like uv detecting Homebrew's Python instead of Nix's
+  xdg.configFile."fish/conf.d/zzz_nix_path_priority.fish".text = ''
+    # Prepend Nix paths to ensure they take priority over Homebrew
+    # brew shellenv adds /opt/homebrew/bin to front, we need Nix first
+    fish_add_path --prepend --move /etc/profiles/per-user/$USER/bin
+    fish_add_path --prepend --move $HOME/.nix-profile/bin
+  '';
   home.sessionPath = shared.sessionPath;
 
   programs = {

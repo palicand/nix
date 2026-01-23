@@ -307,12 +307,10 @@ gcwt extension-error BKBN-3828-my-feature
 ## Homebrew Management
 
 **Two-part approach**:
-- **nix-homebrew**: Manages Homebrew installation and taps (configured in `flake.nix`). Taps are pinned via flake inputs for reproducibility. Current taps: homebrew/bundle, homebrew/services.
+- **nix-homebrew**: Manages Homebrew installation (configured in `flake.nix`). No custom taps currently - `bundle` and `services` commands are built into modern Homebrew.
 - **nix-darwin homebrew module**: Manages packages (brews, casks, Mac App Store apps) in `modules/darwin/apps.nix`. Auto-updates packages on `darwin-rebuild switch`.
 
-**Adding a new tap**: Add as flake input in `flake.nix` (set `flake = false`), add to `nix-homebrew.taps` configuration, then rebuild.
-
-**Note**: Taps are managed as read-only symlinks to /nix/store. `brew doctor` may show false "deprecated taps" warning - ignore it.
+**Adding a new tap**: Add as flake input in `flake.nix` (set `flake = false`), add to `nix-homebrew.taps` configuration, then rebuild. Taps are managed as read-only symlinks to /nix/store.
 
 ## Nix Formatting
 
@@ -455,7 +453,7 @@ See dedicated "Fish Shell Completions" section above for full details. Key point
 3. Remove from `modules/darwin/apps.nix` under `homebrew.taps`
 4. Rebuild with `darwin-rebuild switch`
 
-Current supported taps: homebrew/bundle, homebrew/services. Fonts and versioned casks are now in `homebrew/cask`.
+Fonts and versioned casks are now in `homebrew/cask`. No custom taps are currently configured.
 
 #### Homebrew Package Renames
 

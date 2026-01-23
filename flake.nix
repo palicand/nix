@@ -30,15 +30,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Homebrew taps
-    homebrew-bundle = {
-      url = "github:homebrew/homebrew-bundle";
-      flake = false;
-    };
-    homebrew-services = {
-      url = "github:homebrew/homebrew-services";
-      flake = false;
-    };
   };
 
   outputs =
@@ -50,8 +41,6 @@
       pre-commit-hooks,
       nix-homebrew,
       nix-index-database,
-      homebrew-bundle,
-      homebrew-services,
       ...
     }:
     let
@@ -115,10 +104,6 @@
                 enableRosetta = false;
                 user = "palicand";
                 autoMigrate = true;
-                taps = {
-                  "homebrew/homebrew-bundle" = homebrew-bundle;
-                  "homebrew/homebrew-services" = homebrew-services;
-                };
                 mutableTaps = true;
               };
             }
