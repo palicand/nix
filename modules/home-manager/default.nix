@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  inputs,
   ...
 }:
 
@@ -170,6 +171,11 @@
       '';
     };
 
+    # Symlink claude to ~/.local/bin for native installation detection
+    file.".local/bin/claude".source = "${
+      inputs.claude-code-native.packages.${pkgs.system}.default
+    }/bin/claude";
+
     packages = with pkgs; [
       # Languages/Runtimes
       (python314.withPackages (
@@ -235,7 +241,7 @@
       jdk21_headless
       gradle
       terraform
-      claude-code
+      inputs.claude-code-native.packages.${pkgs.system}.default
       cloc
       auth0-cli
       nixfmt

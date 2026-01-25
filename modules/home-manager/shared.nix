@@ -3,6 +3,7 @@
 {
   # Shared PATH directories
   sessionPath = [
+    "$HOME/.local/bin"
     "$HOME/.npm-global/bin"
     "$HOME/.cargo/bin"
     "/opt/homebrew/share/google-cloud-sdk/bin"
