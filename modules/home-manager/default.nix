@@ -213,6 +213,13 @@
       uv # Fast Python package installer and resolver
       poetry
 
+      # Rust toolchain (declarative, no rustup needed)
+      rustc
+      cargo
+      clippy
+      rustfmt
+      rust-analyzer
+
       # Terminal & CLI tools
       wget
       yadm
