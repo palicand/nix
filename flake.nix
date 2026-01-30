@@ -31,6 +31,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Kotlin LSP from JetBrains
+    kotlin-lsp = {
+      url = "path:./pkgs/kotlin-lsp";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -42,6 +48,7 @@
       nix-homebrew,
       nix-index-database,
       claude-code-native,
+      kotlin-lsp,
       ...
     }:
     let

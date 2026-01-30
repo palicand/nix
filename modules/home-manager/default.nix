@@ -249,6 +249,7 @@
       gradle
       terraform
       inputs.claude-code-native.packages.${pkgs.system}.default
+      inputs.kotlin-lsp.packages.${pkgs.system}.default
       cloc
       auth0-cli
       nixfmt

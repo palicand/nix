@@ -20,6 +20,7 @@
     brews = [
       "gnupg2"
       "pinentry-mac"
+      "cloud-sql-proxy"
     ];
 
     # Taps are now managed by nix-homebrew in flake.nix

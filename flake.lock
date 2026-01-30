@@ -73,6 +73,22 @@
         "type": "github"
       }
     },
+    "kotlin-lsp": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "./pkgs/kotlin-lsp",
+        "type": "path"
+      },
+      "original": {
+        "path": "./pkgs/kotlin-lsp",
+        "type": "path"
+      },
+      "parent": []
+    },
     "nix-homebrew": {
       "inputs": {
         "brew-src": "brew-src"
@@ -132,6 +148,7 @@
         "claude-code-native": "claude-code-native",
         "darwin": "darwin",
         "home-manager": "home-manager",
+        "kotlin-lsp": "kotlin-lsp",
         "nix-homebrew": "nix-homebrew",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs"
