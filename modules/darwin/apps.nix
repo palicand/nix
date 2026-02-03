@@ -37,9 +37,11 @@
       "stats"
       "alfred"
       "keepassxc"
+      "ghostty"
       "iterm2"
       "itermai"
       "crossover"
+      "wispr-flow"
 
       # Security & Privacy
       "mullvad-vpn"
