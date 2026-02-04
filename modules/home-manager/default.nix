@@ -260,6 +260,7 @@
       ghidra
       protobuf
       gh # GitHub CLI
+      cf-terraforming
     ];
   };
 }
