@@ -256,6 +256,10 @@
       nixfmt-tree # Official Nix formatter using treefmt
       nixd
       ncdu
+      grpcurl
+      ghidra
+      protobuf
+      gh # GitHub CLI
     ];
   };
 }
