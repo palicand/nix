@@ -145,6 +145,15 @@ in
           name = "plugin-git";
           inherit (pkgs.fishPlugins.plugin-git) src;
         }
+        {
+          name = "autoenv";
+          src = pkgs.fetchFromGitHub {
+            owner = "SpaceShaman";
+            repo = "autoenv.fish";
+            rev = "master";
+            sha256 = "sha256-AIfdOn28J2vaSSIS4OvHF23FptHnV05Jx5uF0iDp/vU=";
+          };
+        }
       ];
     };
   };

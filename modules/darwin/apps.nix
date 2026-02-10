@@ -58,6 +58,9 @@
       "qbittorrent"
       "vlc"
 
+      # AI
+      "claude"
+
       # Browsers & Desktop apps
       "firefox"
       "tor-browser"
