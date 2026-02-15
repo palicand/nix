@@ -213,12 +213,8 @@
       uv # Fast Python package installer and resolver
       poetry
 
-      # Rust toolchain (declarative, no rustup needed)
-      rustc
-      cargo
-      clippy
-      rustfmt
-      rust-analyzer
+      # Rust toolchain (managed via rustup)
+      rustup
 
       # Terminal & CLI tools
       wget
@@ -243,6 +239,7 @@
       cmake
       stripe-cli
       k9s
+      kubectl
       kubernetes-helm
       openssl
       jdk21_headless

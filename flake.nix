@@ -117,7 +117,7 @@
             }
             ./profiles/personal.nix
             ./modules/darwin/apps.nix
-            { homebrew.brewPrefix = "/opt/homebrew/bin"; }
+            { homebrew.prefix = "/opt/homebrew"; }
           ];
         };
       };

@@ -61,7 +61,10 @@
     nixpkgs-fmt
   ];
 
-  # Set PATH for GUI applications (like Lens) so they can find Nix-managed binaries
-  # Include Homebrew paths to avoid breaking apps that depend on Homebrew
-  launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:${config.environment.systemPath}";
+  # Make Nix-managed binaries visible to GUI apps via macOS path_helper
+  environment.etc."paths.d/nix".text = ''
+    /etc/profiles/per-user/${config.user.name}/bin
+    /run/current-system/sw/bin
+    /nix/var/nix/profiles/default/bin
+  '';
 }
