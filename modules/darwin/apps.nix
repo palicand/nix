@@ -56,6 +56,7 @@
       "spotify"
       "qbittorrent"
       "vlc"
+      "netnewswire"
 
       # AI
       "claude"

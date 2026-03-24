@@ -7,6 +7,7 @@
     "$HOME/.npm-global/bin"
     "$HOME/.cargo/bin"
     "/opt/homebrew/share/google-cloud-sdk/bin"
+    "$HOME/Library/Application Support/JetBrains/Toolbox/scripts"
   ];
 
   # Shared shell aliases (work in both Fish and Zsh)

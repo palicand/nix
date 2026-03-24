@@ -225,6 +225,7 @@
       rsync
       tree
       yq
+      yamllint
       pgcli
       man-db
       jwt-cli
@@ -241,6 +242,7 @@
       k9s
       kubectl
       kubernetes-helm
+      argocd
       openssl
       jdk21_headless
       gradle

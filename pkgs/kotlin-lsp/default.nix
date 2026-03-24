@@ -70,8 +70,24 @@ stdenv.mkDerivation {
       chmod +x $out/libexec/jre/bin/*
     fi
 
-    # Create bin symlink
+    # Patch out runtime chmod (Nix store is read-only; permissions set above)
+    sed -i 's|chmod +x "$LOCAL_JRE_PATH/bin/java"|# chmod removed: Nix store is immutable|' $out/libexec/kotlin-lsp.sh
+
+    # Remove --add-opens for packages that don't exist on this platform (suppresses JVM warnings)
+    ${lib.optionalString stdenv.hostPlatform.isDarwin ''
+      sed -i '/--add-opens java.desktop\/sun.awt.windows=/d' $out/libexec/kotlin-lsp.sh
+      sed -i '/--add-opens java.desktop\/sun.awt.X11=/d' $out/libexec/kotlin-lsp.sh
+      sed -i '/--add-opens java.desktop\/com.sun.java.swing.plaf.gtk=/d' $out/libexec/kotlin-lsp.sh
+    ''}
+    ${lib.optionalString stdenv.hostPlatform.isLinux ''
+      sed -i '/--add-opens java.desktop\/sun.awt.windows=/d' $out/libexec/kotlin-lsp.sh
+      sed -i '/--add-opens java.desktop\/com.apple/d' $out/libexec/kotlin-lsp.sh
+      sed -i '/--add-opens java.desktop\/sun.lwawt/d' $out/libexec/kotlin-lsp.sh
+    ''}
+
+    # Create bin symlinks
     ln -s $out/libexec/kotlin-lsp.sh $out/bin/kotlin-lsp
+    ln -s $out/libexec/kotlin-lsp.sh $out/bin/kotlin-language-server
 
     runHook postInstall
   '';
