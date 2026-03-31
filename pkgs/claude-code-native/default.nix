@@ -6,26 +6,26 @@
 }:
 
 let
-  version = "2.1.81";
+  version = "2.1.88";
 
   baseUrl = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases";
 
   sources = {
     aarch64-darwin = {
       url = "${baseUrl}/${version}/darwin-arm64/claude";
-      sha256 = "d014162177fc18bfeb7f93d942130dd964f7424e4101f6ad569de66e6eddca03";
+      sha256 = "fe0d191adb7b0d26badd1e303e95a63d62d526ca1fb5882f53644754e1e9fe95";
     };
     x86_64-darwin = {
       url = "${baseUrl}/${version}/darwin-x64/claude";
-      sha256 = "3c63d8173d4a86ab3985aead73c4699e42956d10c2f946179274be76ec657099";
+      sha256 = "4036c17c5ebdeaf024f198b041e012e494b8cab8c7dec1bdde567ebbbfc5124d";
     };
     aarch64-linux = {
       url = "${baseUrl}/${version}/linux-arm64/claude";
-      sha256 = "ccfc3845c8d1a2ded9656a3a517694a844a1b7005b87c784a66f7a60cc58012c";
+      sha256 = "2ba4ac149b2198c15e45837fc504146c735fc1e82b9fdf717c2a6b9e0f70c02c";
     };
     x86_64-linux = {
       url = "${baseUrl}/${version}/linux-x64/claude";
-      sha256 = "047e3f5591d6238b08dd9518729ac335b0e8df1c80fe985e5d7fbda2c18fc281";
+      sha256 = "ced6cac958fa4425b90e6c9341a26731715fcb1a253d5bc0f51c8d5a3a6ab66e";
     };
   };
 

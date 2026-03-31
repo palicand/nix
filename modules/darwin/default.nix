@@ -6,6 +6,17 @@
     allowBroken = true;
     allowUnsupportedSystem = true;
   };
+
+  # Workaround: direnv 2.37.1 in nixpkgs uses -linkmode=external but sets CGO_ENABLED=0
+  nixpkgs.overlays = [
+    (final: prev: {
+      direnv = prev.direnv.overrideAttrs (old: {
+        env = (old.env or { }) // {
+          CGO_ENABLED = 1;
+        };
+      });
+    })
+  ];
   imports = [
     ../common.nix
     ./ollama.nix

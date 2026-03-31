@@ -256,12 +256,13 @@ gcwt <dir-suffix> <branch-name>      # Same + automatically cd into it
 ```
 
 **Features:**
-- Creates worktree in parent directory as `<repo-name>-<dir-suffix>`
+- Creates worktree inside the repo at `.worktrees/<dir-suffix>`
+- `.worktrees/` is globally gitignored so worktrees are never tracked
 - Automatically copies relevant git-ignored config files to the new worktree
 - Uses `rsync` with `--info=progress2` to show overall progress (percentage, speed, ETA) when copying files
 - Shows file count before copying and completion message after
 - Uses `origin/main` or `origin/master` as the base branch
-- Example: `git cwt feature-123 feat/my-feature` creates `backend-platform-feature-123`
+- Example: `git cwt feature-123 feat/my-feature` creates `.worktrees/feature-123`
 
 **Configurable File Extensions:**
 
