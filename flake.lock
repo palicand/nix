@@ -17,22 +17,6 @@
         "type": "github"
       }
     },
-    "claude-code-native": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "path": "./pkgs/claude-code-native",
-        "type": "path"
-      },
-      "original": {
-        "path": "./pkgs/claude-code-native",
-        "type": "path"
-      },
-      "parent": []
-    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -72,22 +56,6 @@
         "repo": "home-manager",
         "type": "github"
       }
-    },
-    "kotlin-lsp": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "path": "./pkgs/kotlin-lsp",
-        "type": "path"
-      },
-      "original": {
-        "path": "./pkgs/kotlin-lsp",
-        "type": "path"
-      },
-      "parent": []
     },
     "nix-homebrew": {
       "inputs": {
@@ -129,11 +97,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1774273680,
-        "narHash": "sha256-a++tZ1RQsDb1I0NHrFwdGuRlR5TORvCEUksM459wKUA=",
+        "lastModified": 1774855581,
+        "narHash": "sha256-YkreHeMgTCYvJ5fESV0YyqQK49bHGe2B51tH6claUh4=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "fdc7b8f7b30fdbedec91b71ed82f36e1637483ed",
+        "rev": "15c6719d8c604779cf59e03c245ea61d3d7ab69b",
         "type": "github"
       },
       "original": {
@@ -145,10 +113,8 @@
     },
     "root": {
       "inputs": {
-        "claude-code-native": "claude-code-native",
         "darwin": "darwin",
         "home-manager": "home-manager",
-        "kotlin-lsp": "kotlin-lsp",
         "nix-homebrew": "nix-homebrew",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs"

@@ -25,18 +25,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Claude Code native binary with pinned version
-    claude-code-native = {
-      url = "path:./pkgs/claude-code-native";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Kotlin LSP from JetBrains
-    kotlin-lsp = {
-      url = "path:./pkgs/kotlin-lsp";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
   };
 
   outputs =
@@ -47,8 +35,6 @@
       home-manager,
       nix-homebrew,
       nix-index-database,
-      claude-code-native,
-      kotlin-lsp,
       ...
     }:
     let

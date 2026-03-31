@@ -173,7 +173,7 @@
 
     # Symlink claude to ~/.local/bin for native installation detection
     file.".local/bin/claude".source = "${
-      inputs.claude-code-native.packages.${pkgs.system}.default
+      pkgs.callPackage ../../pkgs/claude-code-native/default.nix { }
     }/bin/claude";
 
     packages = with pkgs; [
@@ -247,8 +247,8 @@
       jdk21_headless
       gradle
       terraform
-      inputs.claude-code-native.packages.${pkgs.system}.default
-      inputs.kotlin-lsp.packages.${pkgs.system}.default
+      (pkgs.callPackage ../../pkgs/claude-code-native/default.nix { })
+      (pkgs.callPackage ../../pkgs/kotlin-lsp/default.nix { })
       cloc
       auth0-cli
       nixfmt
