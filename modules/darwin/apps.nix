@@ -33,6 +33,7 @@
       "zed"
 
       # System utilities
+      "orbstack"
       "stats"
       "alfred"
       "keepassxc"
