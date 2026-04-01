@@ -52,11 +52,17 @@
       "whatsapp"
       "notion"
 
+      # Cloud storage
+      "onedrive"
+
       # Media
       "spotify"
       "qbittorrent"
       "vlc"
       "netnewswire"
+
+      # Gaming
+      "steam"
 
       # AI
       "claude"
