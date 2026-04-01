@@ -106,6 +106,26 @@
             { homebrew.prefix = "/opt/homebrew"; }
           ];
         };
+
+        mac-2026 = mkDarwinConfig {
+          system = "aarch64-darwin";
+          extraModules = [
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                enable = true;
+                enableRosetta = false;
+                user = "palicand";
+                autoMigrate = true;
+                mutableTaps = true;
+              };
+            }
+            ./profiles/personal.nix
+            ./modules/darwin/apps.nix
+            { homebrew.prefix = "/opt/homebrew"; }
+            { ids.gids.nixbld = 350; }
+          ];
+        };
       };
 
       nixosConfigurations = { };

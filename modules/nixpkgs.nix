@@ -5,6 +5,9 @@
   };
   nix = {
     package = pkgs.nix;
+    settings = {
+      max-jobs = "auto";
+    };
     extraOptions = ''
       keep-outputs = false
       keep-derivations = false
