@@ -36,9 +36,6 @@
     chargingChime.enable = false;
   };
 
-  # Keep existing nixbld group ID after stateVersion upgrade
-  ids.gids.nixbld = 30000;
-
   documentation = {
     enable = false;
     doc.enable = false;

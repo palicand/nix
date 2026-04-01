@@ -4,7 +4,7 @@
     config = import ./config.nix;
   };
   nix = {
-    package = pkgs.nix;
+    # nix.package set per-host in hosts/*.nix
     settings = {
       max-jobs = "auto";
     };

@@ -103,6 +103,7 @@
             }
             ./profiles/personal.nix
             ./modules/darwin/apps.nix
+            ./hosts/uber-mac.nix
             { homebrew.prefix = "/opt/homebrew"; }
           ];
         };
@@ -122,8 +123,8 @@
             }
             ./profiles/personal.nix
             ./modules/darwin/apps.nix
+            ./hosts/mac-2026.nix
             { homebrew.prefix = "/opt/homebrew"; }
-            { ids.gids.nixbld = 350; }
           ];
         };
       };
