@@ -15,6 +15,9 @@
           CGO_ENABLED = 1;
         };
       });
+      lix = prev.lix.overrideAttrs (old: {
+        doInstallCheck = false;
+      });
     })
   ];
   imports = [
@@ -74,5 +77,10 @@
     /etc/profiles/per-user/${config.user.name}/bin
     /run/current-system/sw/bin
     /nix/var/nix/profiles/default/bin
+    /opt/homebrew/bin
+    /opt/homebrew/share/google-cloud-sdk/bin
   '';
+
+  # Set PATH for GUI apps (Finder/Dock/Spotlight) that don't use path_helper
+  launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:/opt/homebrew/share/google-cloud-sdk/bin:${config.environment.systemPath}";
 }

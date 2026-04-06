@@ -56,6 +56,9 @@
       # Cloud storage
       "onedrive"
 
+      # Design & CAD
+      "autodesk-fusion"
+
       # Media
       "spotify"
       "qbittorrent"
