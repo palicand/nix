@@ -29,6 +29,7 @@
       "lens"
       "postman"
       "gcloud-cli"
+      "visualvm"
       "wireshark-app"
       "zed"
 
@@ -37,6 +38,7 @@
       "stats"
       "alfred"
       "keepassxc"
+      "cmux"
       "ghostty"
       "iterm2"
       "itermai"
@@ -52,6 +54,9 @@
       "slack"
       "whatsapp"
       "notion"
+
+      # Knowledge management
+      "obsidian"
 
       # Cloud storage
       "onedrive"
@@ -72,6 +77,7 @@
       "claude"
 
       # Browsers & Desktop apps
+      "google-chrome"
       "firefox"
       "tor-browser"
       "github"

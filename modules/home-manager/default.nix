@@ -230,9 +230,9 @@
       man-db
       jwt-cli
       openvpn
-      nodejs
+      nodejs_20
       (yarn.override {
-        nodejs = null;
+        nodejs = nodejs_20;
       })
       tig
       glab # GitLab CLI
@@ -245,6 +245,7 @@
       argocd
       openssl
       jdk21_headless
+      async-profiler
       gradle
       terraform
       (pkgs.callPackage ../../pkgs/claude-code-native/default.nix { })

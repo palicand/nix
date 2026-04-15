@@ -68,18 +68,22 @@
     nerd-fonts.iosevka
   ];
 
-  environment.systemPackages = with pkgs; [
-    nixpkgs-fmt
-  ];
+  environment = {
+    pathsToLink = [ "/lib" ];
 
-  # Make Nix-managed binaries visible to GUI apps via macOS path_helper
-  environment.etc."paths.d/nix".text = ''
-    /etc/profiles/per-user/${config.user.name}/bin
-    /run/current-system/sw/bin
-    /nix/var/nix/profiles/default/bin
-    /opt/homebrew/bin
-    /opt/homebrew/share/google-cloud-sdk/bin
-  '';
+    systemPackages = with pkgs; [
+      nixpkgs-fmt
+    ];
+
+    # Make Nix-managed binaries visible to GUI apps via macOS path_helper
+    etc."paths.d/nix".text = ''
+      /etc/profiles/per-user/${config.user.name}/bin
+      /run/current-system/sw/bin
+      /nix/var/nix/profiles/default/bin
+      /opt/homebrew/bin
+      /opt/homebrew/share/google-cloud-sdk/bin
+    '';
+  };
 
   # Set PATH for GUI apps (Finder/Dock/Spotlight) that don't use path_helper
   launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:/opt/homebrew/share/google-cloud-sdk/bin:${config.environment.systemPath}";
