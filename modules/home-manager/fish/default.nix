@@ -10,17 +10,102 @@ let
   };
 in
 {
-  # Add Homebrew Fish completions (nix-homebrew doesn't generate these)
-  xdg.configFile."fish/completions/brew.fish".source = brewFishCompletions;
+  xdg.configFile = {
+    # Add Homebrew Fish completions (nix-homebrew doesn't generate these)
+    "fish/completions/brew.fish".source = brewFishCompletions;
 
-  # Ensure Nix paths come before Homebrew paths (runs last due to zzz prefix)
-  # This fixes tools like uv detecting Homebrew's Python instead of Nix's
-  xdg.configFile."fish/conf.d/zzz_nix_path_priority.fish".text = ''
-    # Prepend Nix paths to ensure they take priority over Homebrew
-    # brew shellenv adds /opt/homebrew/bin to front, we need Nix first
-    fish_add_path --prepend --move /etc/profiles/per-user/$USER/bin
-    fish_add_path --prepend --move $HOME/.nix-profile/bin
-  '';
+    # Auto-source .env files on directory change.
+    # Walks up from cwd to find nearest .env, sources it, and tracks set vars
+    # so they can be unset when leaving the tree.
+    "fish/conf.d/autoenv.fish".text = ''
+      set -g __autoenv_vars
+      set -g __autoenv_loaded_dir
+
+      function __autoenv_deactivate
+          for var in $__autoenv_vars
+              set -e $var
+          end
+          set -g __autoenv_vars
+          set -g __autoenv_loaded_dir
+      end
+
+      function __autoenv_find_env
+          set -l dir (pwd)
+          while test -n "$dir"
+              if test -f "$dir/.env"
+                  echo "$dir/.env"
+                  return 0
+              end
+              if test "$dir" = "/" -o "$dir" = "$HOME"
+                  return 1
+              end
+              set dir (path dirname "$dir")
+          end
+          return 1
+      end
+
+      function __autoenv_activate -a env_file
+          __autoenv_deactivate
+          set -g __autoenv_loaded_dir (path dirname "$env_file")
+          set -l vars
+          while read -l line
+              # Skip blank lines and comments
+              if string match -qr '^\s*(#|$)' -- $line
+                  continue
+              end
+              # Strip trailing inline comment (after unquoted whitespace + #)
+              set line (string replace -r '\s+#.*$' "" -- $line)
+              # Split on first =
+              set -l pair (string split -m 1 '=' -- $line)
+              if test (count $pair) -ne 2
+                  continue
+              end
+              set -l key (string trim -- $pair[1])
+              # Strip leading "export "
+              set key (string replace -r '^export\s+' "" -- $key)
+              # Validate key is identifier
+              if not string match -qr '^[a-zA-Z_][a-zA-Z0-9_]*$' -- $key
+                  continue
+              end
+              set -l value (string trim -- $pair[2])
+              # Strip matching surrounding single or double quotes
+              set value (string replace -r '^"(.*)"$' '$1' -- $value)
+              set value (string replace -r "^'(.*)'\$" '$1' -- $value)
+              set -gx $key $value
+              set -a vars $key
+          end < "$env_file"
+          set -g __autoenv_vars $vars
+      end
+
+      function __autoenv_check --on-variable PWD
+          set -l env_file (__autoenv_find_env)
+          if test $status -eq 0
+              set -l dir (path dirname "$env_file")
+              # Still inside the tree we already loaded — nothing to do
+              if test "$dir" = "$__autoenv_loaded_dir"
+                  return
+              end
+              __autoenv_activate "$env_file"
+          else if test -n "$__autoenv_loaded_dir"
+              __autoenv_deactivate
+          end
+      end
+
+      # Run once at shell startup for new interactive shells in env'd directories
+      if status is-interactive
+          __autoenv_check
+      end
+    '';
+
+    # Ensure Nix paths come before Homebrew paths (runs last due to zzz prefix)
+    # This fixes tools like uv detecting Homebrew's Python instead of Nix's
+    "fish/conf.d/zzz_nix_path_priority.fish".text = ''
+      # Prepend Nix paths to ensure they take priority over Homebrew
+      # brew shellenv adds /opt/homebrew/bin to front, we need Nix first
+      fish_add_path --prepend --move /etc/profiles/per-user/$USER/bin
+      fish_add_path --prepend --move $HOME/.nix-profile/bin
+    '';
+  };
   home.sessionPath = shared.sessionPath;
 
   programs = {
@@ -144,15 +229,6 @@ in
         {
           name = "plugin-git";
           inherit (pkgs.fishPlugins.plugin-git) src;
-        }
-        {
-          name = "autoenv";
-          src = pkgs.fetchFromGitHub {
-            owner = "SpaceShaman";
-            repo = "autoenv.fish";
-            rev = "master";
-            sha256 = "sha256-AIfdOn28J2vaSSIS4OvHF23FptHnV05Jx5uF0iDp/vU=";
-          };
         }
       ];
     };
