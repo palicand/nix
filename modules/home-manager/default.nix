@@ -261,6 +261,7 @@
       protobuf
       gh # GitHub CLI
       cf-terraforming
+      flarectl # Official Cloudflare CLI
     ];
   };
 }
