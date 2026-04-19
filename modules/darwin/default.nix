@@ -24,6 +24,7 @@
     ../common.nix
     ./ollama.nix
     ./charging-chime.nix
+    ./filevault.nix
   ];
   # Auto upgrade nix package and the daemon service.
   # Create /etc/bashrc that loads the nix-darwin environment.
@@ -37,6 +38,8 @@
     primaryUser = "palicand";
     # Disable charging chime/alert sound
     chargingChime.enable = false;
+    # Assert FileVault stays enabled on every rebuild
+    fileVault.enable = true;
   };
 
   documentation = {
