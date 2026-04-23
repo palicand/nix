@@ -90,4 +90,11 @@
 
   # Set PATH for GUI apps (Finder/Dock/Spotlight) that don't use path_helper
   launchd.user.envVariables.PATH = "/opt/homebrew/bin:/opt/homebrew/sbin:/opt/homebrew/share/google-cloud-sdk/bin:${config.environment.systemPath}";
+  # Upstream bug in nixpkgs' split nodejs: npm's default globalPrefix
+  # resolves inside the `nodejs-slim` store output (which has no `lib/`),
+  # so any `npx` launch without an existing .npmrc fails with
+  # `ENOENT: lstat '…-nodejs-slim-20.20.2/lib'`. Pinning a user-owned prefix
+  # sidesteps the default. Launchd doesn't expand $HOME, so use the
+  # absolute path. Mirrored in home-manager/default.nix for shells.
+  launchd.user.envVariables.NPM_CONFIG_PREFIX = "/Users/palicand/.npm-global";
 }

@@ -158,6 +158,10 @@
     sessionVariables = {
       EDITOR = "zed --wait";
       VISUAL = "zed --wait";
+      # See launchd.user.envVariables.NPM_CONFIG_PREFIX in darwin/default.nix
+      # for why this is needed. The directory is created by the
+      # ensureNpmPrefix activation below.
+      NPM_CONFIG_PREFIX = "$HOME/.npm-global";
     };
 
     activation = {
@@ -168,6 +172,11 @@
         if [ -f "$HOME/Applications/Home Manager Applications" ]; then
           ln -sfn $genProfilePath/home-path/Applications "$HOME/Applications/Home Manager Applications"
         fi
+      '';
+
+      # npm ENOENTs on $PREFIX/lib if it doesn't exist — create it.
+      ensureNpmPrefix = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        run mkdir -p "$HOME/.npm-global/lib"
       '';
     };
 
