@@ -22,8 +22,15 @@ in
           System Settings -> Privacy & Security -> FileVault
         then keep this option true to prevent accidental regressions.
 
-        On APFS, the whole container shares a single encryption state, so
-        checking the boot volume covers every internal data volume.
+        FileVault on APFS is per-volume. `fdesetup status` reports the
+        boot volume's state, which in practice tracks the user Data volume
+        alongside it (the two volumes Apple enrolls together when FileVault
+        is turned on). Other volumes in the same container -- Preboot,
+        Recovery, VM, and the Nix Store volume created by the Nix installer
+        -- are intentionally left off FileVault so they can mount before
+        login. On Apple Silicon those volumes are still encrypted at rest
+        via a hardware key in the Secure Enclave; FileVault adds a second
+        layer that binds the key to the user password.
       '';
     };
   };
