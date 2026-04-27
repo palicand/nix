@@ -18,7 +18,7 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_NIX="$SCRIPT_DIR/default.nix"
-BASE_URL="https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases"
+BASE_URL="https://downloads.claude.ai/claude-code-releases"
 MANIFEST_URL="$BASE_URL/$VERSION/manifest.json"
 
 echo "Fetching manifest for version $VERSION..."
