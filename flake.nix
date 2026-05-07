@@ -17,6 +17,16 @@
 
     nix-homebrew = {
       url = "github:zhaofengli/nix-homebrew";
+      inputs.brew-src.follows = "brew-src";
+    };
+
+    # Pin Homebrew core to a known-good version. Override of nix-homebrew's
+    # transitive brew-src input. 5.1.7/5.1.8 ship a regression in
+    # cask_struct_generator.rb (`to_sym` on nil for bare `depends :macos`);
+    # fixed upstream in 5.1.9 (Homebrew/brew@1c8cbf3).
+    brew-src = {
+      url = "github:Homebrew/brew/5.1.10";
+      flake = false;
     };
 
     # Pre-built nix-index database for command-not-found
