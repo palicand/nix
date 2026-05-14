@@ -21,6 +21,11 @@
         "target/"
         ".claude/"
         ".worktrees/"
+        # Personal dev shell (nix flake + direnv) — not shared with teams
+        "flake.nix"
+        "flake.lock"
+        ".envrc"
+        ".direnv/"
       ];
       settings = {
         user = {
