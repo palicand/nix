@@ -1,4 +1,34 @@
+{ lib, ... }:
+let
+  commonIgnores = [
+    ".vscode"
+    ".mypy_cache"
+    ".pytest_cache"
+    "docker-compose.dev.yaml"
+    ".env"
+    "docs/README.md"
+    "*.~lock*"
+    "*.egg-info/"
+    ".idea/"
+    ".metals/"
+    ".bloop/"
+    "target/"
+    ".claude/"
+    ".worktrees/"
+  ];
+
+  # Work repos shouldn't carry personal flake.nix / direnv setup.
+  bkbnExtraIgnores = [
+    "flake.nix"
+    "flake.lock"
+    ".envrc"
+    ".direnv/"
+  ];
+in
 {
+  home.file.".config/git/ignore-bkbn".text =
+    lib.concatStringsSep "\n" (commonIgnores ++ bkbnExtraIgnores) + "\n";
+
   programs = {
     git = {
       enable = true;
@@ -6,27 +36,7 @@
       #   key = "7E2DD79792CEC919";
       #   signByDefault = true;
       # };
-      ignores = [
-        ".vscode"
-        ".mypy_cache"
-        ".pytest_cache"
-        "docker-compose.dev.yaml"
-        ".env"
-        "docs/README.md"
-        "*.~lock*"
-        "*.egg-info/"
-        ".idea/"
-        ".metals/"
-        ".bloop/"
-        "target/"
-        ".claude/"
-        ".worktrees/"
-        # Personal dev shell (nix flake + direnv) — not shared with teams
-        "flake.nix"
-        "flake.lock"
-        ".envrc"
-        ".direnv/"
-      ];
+      ignores = commonIgnores;
       settings = {
         user = {
           name = "Andrej Palicka";
@@ -99,6 +109,17 @@
             };
             push = {
               default = "simple";
+            };
+          };
+        }
+        {
+          condition = "gitdir:/Users/palicand/projects/bkbn/";
+          contents = {
+            user = {
+              email = "a.palicka@bkbn.com";
+            };
+            core = {
+              excludesFile = "~/.config/git/ignore-bkbn";
             };
           };
         }
