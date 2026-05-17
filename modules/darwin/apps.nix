@@ -35,6 +35,8 @@
 
       # System utilities
       "orbstack"
+      "utm"
+      "crystalfetch"
       "stats"
       "alfred"
       "keepassxc"
