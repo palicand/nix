@@ -153,10 +153,6 @@ in
             set -p fish_complete_path (brew --prefix)/share/fish/vendor_completions.d
         end
 
-                # GPG agent for SSH
-                set -gx GPG_TTY (tty)
-                set -gx SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
-
                 # iTerm2 shell integration
                 test -e "$HOME/.iterm2_shell_integration.fish"; and source "$HOME/.iterm2_shell_integration.fish"
       '';

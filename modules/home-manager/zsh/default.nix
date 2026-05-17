@@ -45,10 +45,6 @@ in
           eval "$(/opt/homebrew/bin/brew shellenv)"
         fi
 
-        # GPG agent for SSH
-        export GPG_TTY=$(tty)
-        export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-
         # iTerm2 shell integration
         test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
 
