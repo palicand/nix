@@ -180,10 +180,13 @@
       '';
     };
 
-    # Symlink claude to ~/.local/bin for native installation detection
-    file.".local/bin/claude".source = "${
-      pkgs.callPackage ../../pkgs/claude-code-native/default.nix { }
-    }/bin/claude";
+    # Symlink claude to ~/.local/bin for native installation detection.
+    # force = true overrides any stale symlink left by claude's self-updater
+    # (the wrapper sets DISABLE_AUTOUPDATER=1, but pre-Nix installs may persist).
+    file.".local/bin/claude" = {
+      source = "${pkgs.callPackage ../../pkgs/claude-code-native/default.nix { }}/bin/claude";
+      force = true;
+    };
 
     packages = with pkgs; [
       # Languages/Runtimes
