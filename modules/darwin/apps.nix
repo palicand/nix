@@ -39,17 +39,14 @@
       "crystalfetch"
       "stats"
       "alfred"
-      "keepassxc"
       "cmux"
       "ghostty"
-      "iterm2"
-      "itermai"
       "crossover"
       "wispr-flow"
 
       # Security & Privacy
       "mullvad-vpn"
-      "1password"
+      "keepassxc"
 
       # Communication
       "signal"
