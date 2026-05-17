@@ -1,24 +1,27 @@
 #!/usr/bin/env bash
-# Update claude-code-native to a specific version
-# Usage: ./update.sh <version>
-# Example: ./update.sh 2.1.20
+# Update claude-code-native to a specific version, or to the latest release.
+# Usage: ./update.sh [version]
+# Examples:
+#   ./update.sh           # fetch the version from the 'latest' channel
+#   ./update.sh 2.1.143
 
 set -euo pipefail
-
-VERSION="${1:-}"
-
-if [[ -z "$VERSION" ]]; then
-  echo "Usage: $0 <version>"
-  echo "Example: $0 2.1.20"
-  echo ""
-  echo "To find the latest version, check:"
-  echo "  https://code.claude.com/docs/en/setup"
-  exit 1
-fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_NIX="$SCRIPT_DIR/default.nix"
 BASE_URL="https://downloads.claude.ai/claude-code-releases"
+
+VERSION="${1:-}"
+
+if [[ -z "$VERSION" ]]; then
+  echo "No version specified; querying the 'latest' channel..."
+  VERSION=$(curl -sf "$BASE_URL/latest") || {
+    echo "Error: failed to fetch latest version from $BASE_URL/latest"
+    exit 1
+  }
+  echo "Latest version: $VERSION"
+fi
+
 MANIFEST_URL="$BASE_URL/$VERSION/manifest.json"
 
 echo "Fetching manifest for version $VERSION..."

@@ -1,20 +1,33 @@
 #!/usr/bin/env bash
-# Update kotlin-lsp to a specific version
-# Usage: ./update.sh <version>
-# Example: ./update.sh 261.13587.0
+# Update kotlin-lsp to a specific version, or to the latest GitHub release.
+# Usage: ./update.sh [version]
+# Examples:
+#   ./update.sh              # fetch latest release from GitHub
+#   ./update.sh 262.4739.0
+#   ./update.sh v262.4739.0  # tag-style accepted
 
 set -euo pipefail
 
 VERSION="${1:-}"
 
 if [[ -z "$VERSION" ]]; then
-  echo "Usage: $0 <version>"
-  echo "Example: $0 261.13587.0"
-  echo ""
-  echo "To find the latest version, check:"
-  echo "  https://github.com/Kotlin/kotlin-lsp/releases"
-  exit 1
+  echo "No version specified; querying GitHub for the latest release..."
+  if ! command -v gh >/dev/null; then
+    echo "Error: 'gh' CLI not available. Install it or pass a version explicitly."
+    echo "Latest releases: https://github.com/Kotlin/kotlin-lsp/releases"
+    exit 1
+  fi
+  TAG=$(gh release list --repo Kotlin/kotlin-lsp --limit 1 --json tagName -q '.[0].tagName') || {
+    echo "Error: failed to query GitHub releases for Kotlin/kotlin-lsp."
+    exit 1
+  }
+  # Tags look like "kotlin-lsp/v262.4739.0"; strip the project prefix.
+  VERSION="${TAG#kotlin-lsp/}"
+  echo "Latest release: $TAG"
 fi
+
+# Accept tag-style versions (e.g. v262.4739.0); the CDN path has no 'v' prefix.
+VERSION="${VERSION#v}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_NIX="$SCRIPT_DIR/default.nix"
@@ -22,19 +35,22 @@ BASE_URL="https://download-cdn.jetbrains.com/kotlin-lsp/${VERSION}"
 
 echo "Fetching checksums for version $VERSION..."
 
-# Platforms to fetch
+# Each platform has its own archive suffix. JetBrains migrated kotlin-lsp's
+# standalone artifacts from `kotlin-lsp-<ver>-<plat>.zip` to per-platform
+# native archives: `.sit` (a zip with macOS metadata) on Darwin and `.tar.gz`
+# on Linux. x86_64 has no platform suffix in the filename.
 declare -A PLATFORMS=(
-  ["aarch64-darwin"]="mac-aarch64"
-  ["x86_64-darwin"]="mac-x64"
-  ["aarch64-linux"]="linux-aarch64"
-  ["x86_64-linux"]="linux-x64"
+  ["aarch64-darwin"]="-aarch64.sit"
+  ["x86_64-darwin"]=".sit"
+  ["aarch64-linux"]="-aarch64.tar.gz"
+  ["x86_64-linux"]=".tar.gz"
 )
 
 declare -A CHECKSUMS
 
 for nix_platform in "${!PLATFORMS[@]}"; do
-  jetbrains_platform="${PLATFORMS[$nix_platform]}"
-  url="${BASE_URL}/kotlin-lsp-${VERSION}-${jetbrains_platform}.zip.sha256"
+  suffix="${PLATFORMS[$nix_platform]}"
+  url="${BASE_URL}/kotlin-server-${VERSION}${suffix}.sha256"
 
   checksum=$(curl -sf "$url" | awk '{print $1}') || {
     echo "Error: Failed to fetch checksum for $nix_platform"

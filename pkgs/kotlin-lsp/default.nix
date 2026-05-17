@@ -6,26 +6,26 @@
 }:
 
 let
-  version = "262.2310.0";
+  version = "262.4739.0";
 
   baseUrl = "https://download-cdn.jetbrains.com/kotlin-lsp/${version}";
 
   sources = {
     aarch64-darwin = {
-      url = "${baseUrl}/kotlin-lsp-${version}-mac-aarch64.zip";
-      sha256 = "11560eb4ecd766204363848cc5ee84b51c0fd03fbfd4bbedaba0f00af74309c7";
+      url = "${baseUrl}/kotlin-server-${version}-aarch64.sit";
+      sha256 = "1b745743ce22ad92681a1bc3b1046803e942a6e1f36e04fb85ae9a40334a2f1e";
     };
     x86_64-darwin = {
-      url = "${baseUrl}/kotlin-lsp-${version}-mac-x64.zip";
-      sha256 = "a4ccf591664cfef6a12f21a690d23bad26b92de62ed34674491b915f25f95bf5";
+      url = "${baseUrl}/kotlin-server-${version}.sit";
+      sha256 = "6f06efe7a10f94b9c8a028c4efeb6c7e1769f47a01edfb74450acf30ab5665e4";
     };
     aarch64-linux = {
-      url = "${baseUrl}/kotlin-lsp-${version}-linux-aarch64.zip";
-      sha256 = "1f8c814dfa9d64a9fba32b83a6fa0279cbc48e7240ef0ce922c7db2f39f0d35c";
+      url = "${baseUrl}/kotlin-server-${version}-aarch64.tar.gz";
+      sha256 = "625870ae091c6d0dee25514d545c708a6ea50d7cbb5154aaf1aa9123ccff338b";
     };
     x86_64-linux = {
-      url = "${baseUrl}/kotlin-lsp-${version}-linux-x64.zip";
-      sha256 = "c004242158f4b5e1d917ddd848e6f6a279484fa58a3e2bce8846b807d1ad16b1";
+      url = "${baseUrl}/kotlin-server-${version}.tar.gz";
+      sha256 = "46971110c9b8a3360ce3fdf5437467f4c447dad37ad73dbf81d64af6779e4105";
     };
   };
 
@@ -46,9 +46,19 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontStrip = true;
 
+  # Darwin ships a `.sit` (zip payload with macOS metadata), Linux a `.tar.gz`.
+  # Both wrap their contents in a top-level `kotlin-server-<version>/` dir;
+  # flatten that so the rest of the derivation sees a stable `unpacked/` root.
   unpackPhase = ''
     runHook preUnpack
-    unzip $src -d unpacked
+    mkdir staging
+    case "$src" in
+      *.sit) unzip -q $src -d staging ;;
+      *.tar.gz) tar -xzf $src -C staging ;;
+      *) echo "kotlin-lsp: unsupported archive $src" >&2; exit 1 ;;
+    esac
+    mv staging/*/ unpacked
+    rmdir staging
     runHook postUnpack
   '';
 
@@ -56,38 +66,11 @@ stdenv.mkDerivation {
     runHook preInstall
 
     mkdir -p $out/libexec $out/bin
-
-    # Copy the unpacked contents to libexec
     cp -r unpacked/* $out/libexec/
 
-    # Make scripts and JRE executable
-    chmod +x $out/libexec/kotlin-lsp.sh
-    if [[ -d "$out/libexec/jre/Contents/Home/bin" ]]; then
-      # macOS JRE structure
-      chmod +x $out/libexec/jre/Contents/Home/bin/*
-    elif [[ -d "$out/libexec/jre/bin" ]]; then
-      # Linux JRE structure
-      chmod +x $out/libexec/jre/bin/*
-    fi
-
-    # Patch out runtime chmod (Nix store is read-only; permissions set above)
-    sed -i 's|chmod +x "$LOCAL_JRE_PATH/bin/java"|# chmod removed: Nix store is immutable|' $out/libexec/kotlin-lsp.sh
-
-    # Remove --add-opens for packages that don't exist on this platform (suppresses JVM warnings)
-    ${lib.optionalString stdenv.hostPlatform.isDarwin ''
-      sed -i '/--add-opens java.desktop\/sun.awt.windows=/d' $out/libexec/kotlin-lsp.sh
-      sed -i '/--add-opens java.desktop\/sun.awt.X11=/d' $out/libexec/kotlin-lsp.sh
-      sed -i '/--add-opens java.desktop\/com.sun.java.swing.plaf.gtk=/d' $out/libexec/kotlin-lsp.sh
-    ''}
-    ${lib.optionalString stdenv.hostPlatform.isLinux ''
-      sed -i '/--add-opens java.desktop\/sun.awt.windows=/d' $out/libexec/kotlin-lsp.sh
-      sed -i '/--add-opens java.desktop\/com.apple/d' $out/libexec/kotlin-lsp.sh
-      sed -i '/--add-opens java.desktop\/sun.lwawt/d' $out/libexec/kotlin-lsp.sh
-    ''}
-
-    # Create bin symlinks
-    ln -s $out/libexec/kotlin-lsp.sh $out/bin/kotlin-lsp
-    ln -s $out/libexec/kotlin-lsp.sh $out/bin/kotlin-language-server
+    # Native launcher; the deprecated kotlin-lsp.sh wrapper just exec's this.
+    ln -s $out/libexec/bin/intellij-server $out/bin/kotlin-lsp
+    ln -s $out/libexec/bin/intellij-server $out/bin/kotlin-language-server
 
     runHook postInstall
   '';
