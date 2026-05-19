@@ -248,6 +248,14 @@
       })
       tig
       glab # GitLab CLI
+      # Bridge GitLab Container Registry auth into Docker / crane via glab's built-in
+      # `glab auth docker-helper`. `glab auth configure-docker` tries to install this
+      # to /etc/profiles/per-user/<u>/bin (read-only Nix profile) and fails; declaring
+      # the shim here puts it on PATH the proper way. Registered as the credHelper
+      # for registry.gitlab.com in ~/.docker/config.json.
+      (pkgs.writeShellScriptBin "docker-credential-glab" ''
+        exec ${pkgs.glab}/bin/glab auth docker-helper "$@"
+      '')
       ffmpeg
       cmake
       stripe-cli
