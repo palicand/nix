@@ -57,8 +57,8 @@
       # Knowledge management
       "obsidian"
 
-      # Cloud storage
-      "onedrive"
+      # Productivity (includes OneDrive)
+      "microsoft-office"
 
       # Design & CAD
       "autodesk-fusion"
