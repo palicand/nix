@@ -178,6 +178,22 @@
       ensureNpmPrefix = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         run mkdir -p "$HOME/.npm-global/lib"
       '';
+
+      # home-manager dereferences symlinks when copying .app bundles into
+      # ~/Applications, which breaks Ghidra's launcher: the bundled
+      # MacOS/Ghidra is a symlink to lib/ghidra/ghidraRun whose readlink-derived
+      # SCRIPT_DIR is used to locate support/launch.sh. After copy, SCRIPT_DIR
+      # points to ~/Applications/.../MacOS and support/ is nowhere near.
+      # Overwrite the launcher with one that execs ghidraRun by absolute path
+      # so readlink -f resolves it under the nix-store install.
+      fixGhidraAppLauncher = lib.hm.dag.entryAfter [ "aliasApplications" ] ''
+        ghidraApp="$HOME/Applications/Home Manager Apps/Ghidra.app/Contents/MacOS/Ghidra"
+        ghidraDir="$(dirname "$ghidraApp")"
+        if [ -e "$ghidraApp" ]; then
+          run chmod +w "$ghidraDir" "$ghidraApp" 2>/dev/null || true
+          run install -m 0755 ${pkgs.writeShellScript "Ghidra" ''exec ${pkgs.ghidra}/lib/ghidra/ghidraRun "$@"''} "$ghidraApp"
+        fi
+      '';
     };
 
     # Symlink claude to ~/.local/bin for native installation detection.
