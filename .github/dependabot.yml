@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:30"
+    labels:
+      - dependencies
+      - automated
+    commit-message:
+      prefix: "chore"

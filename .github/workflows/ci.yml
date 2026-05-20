@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (nixfmt, statix, deadnix, flake check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: nixfmt --check
+        run: |
+          nix shell nixpkgs#nixfmt-rfc-style -c sh -c '
+            find . -name "*.nix" \
+              -not -path "./.git/*" -not -path "./result*" -print0 \
+              | xargs -0 nixfmt --check
+          '
+
+      - name: statix check
+        run: nix shell nixpkgs#statix -c statix check .
+
+      - name: deadnix
+        run: |
+          nix shell nixpkgs#deadnix -c \
+            deadnix --no-lambda-arg --no-lambda-pattern-names --fail .
+
+      - name: nix flake check (eval-only)
+        run: nix flake check --no-build --all-systems
+
+  build:
+    name: Build darwinConfigurations.uber-mac
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build system closure
+        run: nix build .#checks.aarch64-darwin.darwin --print-build-logs
