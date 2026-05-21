@@ -96,7 +96,12 @@ in
           fi
         }
       '';
-      shellAliases = shared.aliases;
+      shellAliases = shared.aliases // {
+        # Match fish plugin-git's force-push family; oh-my-zsh ships `gpf!`
+        # (= --force) but not the safer --force-with-lease variants.
+        "gp!" = "git push --force-with-lease";
+        "ggp!" = ''git push --force-with-lease origin "$(git_current_branch)"'';
+      };
     };
 
     starship = {
