@@ -66,6 +66,9 @@
       # Media
       "spotify"
       "qbittorrent"
+      "radarr"
+      "sonarr"
+      "prowlarr"
       "vlc"
       "netnewswire"
 
