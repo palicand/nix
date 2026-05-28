@@ -35,6 +35,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Encrypted secrets management (age/GPG/KMS). Decrypts to /run/secrets at activation.
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -45,6 +51,7 @@
       home-manager,
       nix-homebrew,
       nix-index-database,
+      sops-nix,
       ...
     }:
     let
@@ -97,6 +104,20 @@
           }) nixpkgs.lib.platforms.linux)
       );
 
+      # Per-repo dev shell. Activated by `.envrc` via nix-direnv.
+      # Holds tooling that should NOT pollute the global user profile —
+      # currently just the sops editing toolkit, only useful inside this repo.
+      devShells.aarch64-darwin.default =
+        let
+          pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        in
+        pkgs.mkShell {
+          packages = with pkgs; [
+            sops
+            ssh-to-age
+          ];
+        };
+
       darwinConfigurations = {
         uber-mac = mkDarwinConfig {
           system = "aarch64-darwin";
@@ -122,6 +143,7 @@
           system = "aarch64-darwin";
           extraModules = [
             nix-homebrew.darwinModules.nix-homebrew
+            sops-nix.darwinModules.sops
             {
               nix-homebrew = {
                 enable = true;
@@ -134,6 +156,7 @@
             ./profiles/personal.nix
             ./modules/darwin/apps.nix
             ./hosts/mac-2026.nix
+            ./modules/darwin/sops.nix
             { homebrew.prefix = "/opt/homebrew"; }
           ];
         };

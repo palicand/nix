@@ -1,0 +1,17 @@
+# sops recipient configuration.
+# Anchors below are referenced by creation_rules so a given file is encrypted
+# to multiple recipients (user for editing, host for activation-time decrypt).
+#
+# To add a new machine: derive its age key with `ssh-to-age -i /etc/ssh/ssh_host_ed25519_key.pub`,
+# add a new anchor under `keys:`, reference it under the relevant `creation_rules` entry,
+# then run `sops updatekeys secrets/*.yaml` to re-encrypt existing files to the new recipient.
+keys:
+  - &user_palicand age19lmp5mpkgwz9e9lq40w9pta0msspryrjdu28er9h0342nrlwwu0qtupfg4
+  - &host_mac2026 age1q8yytl5rq4c7a6cltm4ec3t4ku0xttr36d9q0n9w4td5ae3rsc6sm3c230
+
+creation_rules:
+  - path_regex: secrets/[^/]+\.yaml$
+    key_groups:
+      - age:
+          - *user_palicand
+          - *host_mac2026

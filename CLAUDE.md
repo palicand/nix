@@ -202,6 +202,45 @@ system.chargingChime.enable = true;   # Enable
 
 Activation script runs automatically during `darwin-rebuild switch`.
 
+### Managing Secrets (sops-nix)
+
+Secrets live encrypted in `secrets/*.yaml` and are decrypted at system activation into `/run/secrets/<name>`. The token-rendering pattern in `modules/darwin/sops.nix` keeps secret values out of the Nix store entirely.
+
+**Architecture**:
+- `.sops.yaml` — declares recipients via YAML anchors and maps file globs to recipient groups
+- `secrets/tokens.yaml` — encrypted file, committed to git
+- `modules/darwin/sops.nix` — declares which keys to decrypt and how (templates, paths)
+- `flake.nix` — imports `sops-nix.darwinModules.sops` for `mac-2026` only (uber-mac is retired; if revived, derive its host age key and add as a recipient before importing the module)
+
+**Recipients**:
+- Host SSH key (`/etc/ssh/ssh_host_ed25519_key`) — for activation-time decryption
+- User SSH key (`~/.ssh/id_ed25519`) — for `sops edit` from the user account
+
+**Tooling**: `sops` and `ssh-to-age` are NOT in the global user profile. They live in the repo's devShell (`flake.nix` → `devShells.aarch64-darwin.default`) and are exposed by direnv on `cd ~/.nixpkgs`.
+
+**Adding a new secret**:
+```bash
+cd ~/.nixpkgs                              # direnv loads sops/ssh-to-age
+sops set secrets/tokens.yaml '["my_key"]' '"my_value"'
+# Then declare it in modules/darwin/sops.nix:
+#   sops.secrets.my_key = { };
+# And reference config.sops.secrets.my_key.path or use a template.
+git add secrets/tokens.yaml modules/darwin/sops.nix
+sudo darwin-rebuild switch --flake .
+```
+
+**Editing an existing secret**: `sops secrets/tokens.yaml` — opens `$EDITOR` on the decrypted contents, re-encrypts on save.
+
+**Adding a new machine**:
+1. On the new machine: `nix run nixpkgs#ssh-to-age -- -i /etc/ssh/ssh_host_ed25519_key.pub`
+2. Add the output as a new anchor under `keys:` in `.sops.yaml` and reference it in `creation_rules`
+3. `sops updatekeys secrets/*.yaml` (from a machine that already has access)
+4. Add `sops-nix.darwinModules.sops` and `./modules/darwin/sops.nix` to that host in `flake.nix`
+
+**Rotating the data key** (good hygiene every 6-12 months, or after revoking a recipient): `sops rotate -i secrets/tokens.yaml`
+
+**Why the template pattern for GitHub tokens**: `nix.extraOptions = ''!include ${config.sops.templates."nix-access-tokens.conf".path}''` writes only a path reference into `/etc/nix/nix.conf`. The actual token value lives in `/run/secrets/rendered/nix-access-tokens.conf`, which is tmpfs-like (recreated at activation) and never enters the Nix store. Without this pattern, `nix.settings.access-tokens` would inline the secret into `/etc/nix/nix.conf` (a world-readable store path).
+
 ## Important Configuration Details
 
 - **State Version**: home-manager uses "25.11", darwin uses state version 6
