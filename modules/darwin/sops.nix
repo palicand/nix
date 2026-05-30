@@ -9,7 +9,12 @@
     age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
     # Each `secrets.<name> = { };` decrypts to /run/secrets/<name> at activation.
-    secrets.github_token = { };
+    # User-owned so interactive shells can read it to export HOMEBREW_GITHUB_API_TOKEN
+    # (mirrors gitlab_pat). The nix-daemon uses the rendered template below, not this file.
+    secrets.github_token = {
+      owner = config.system.primaryUser;
+      mode = "0400";
+    };
 
     # glab OAuth races under concurrent calls; a static PAT avoids it. Owned by the user so shells export GITLAB_TOKEN.
     secrets.gitlab_pat = {

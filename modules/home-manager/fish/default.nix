@@ -150,6 +150,13 @@ in
                     set -gx GITLAB_TOKEN (cat /run/secrets/gitlab_pat)
                 end
 
+                # Homebrew authenticates api.github.com with this (raises the IP's
+                # 60 req/hr unauthenticated cap to 5000), so brew update/cask checks
+                # stop exhausting the shared GitHub rate limit.
+                if test -r /run/secrets/github_token
+                    set -gx HOMEBREW_GITHUB_API_TOKEN (cat /run/secrets/github_token)
+                end
+
              if test -d (brew --prefix)"/share/fish/completions"
             set -p fish_complete_path (brew --prefix)/share/fish/completions
         end

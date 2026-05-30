@@ -84,6 +84,12 @@ in
         fetch = {
           prune = true;
         };
+        # Authenticate github.com HTTPS git operations via gh's token so plain git
+        # (and tools that shell out to it) don't hit GitHub anonymously.
+        credential = {
+          "https://github.com".helper = "!gh auth git-credential";
+          "https://gist.github.com".helper = "!gh auth git-credential";
+        };
         rebase = {
           autoStash = true;
           autoSquash = true;

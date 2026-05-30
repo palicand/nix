@@ -50,6 +50,13 @@ in
           export GITLAB_TOKEN="$(cat /run/secrets/gitlab_pat)"
         fi
 
+        # Homebrew authenticates api.github.com with this (raises the IP's 60 req/hr
+        # unauthenticated cap to 5000), so brew update/cask checks stop exhausting
+        # the shared GitHub rate limit.
+        if [[ -r /run/secrets/github_token ]]; then
+          export HOMEBREW_GITHUB_API_TOKEN="$(cat /run/secrets/github_token)"
+        fi
+
         # iTerm2 shell integration
         test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
 
