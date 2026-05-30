@@ -11,6 +11,12 @@
     # Each `secrets.<name> = { };` decrypts to /run/secrets/<name> at activation.
     secrets.github_token = { };
 
+    # glab OAuth races under concurrent calls; a static PAT avoids it. Owned by the user so shells export GITLAB_TOKEN.
+    secrets.gitlab_pat = {
+      owner = config.system.primaryUser;
+      mode = "0400";
+    };
+
     # Render a Nix config fragment with the token interpolated at activation
     # time. The rendered file lives under /run/secrets-rendered/, so the token
     # value never enters the Nix store — only the path-reference does.

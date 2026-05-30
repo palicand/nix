@@ -45,6 +45,11 @@ in
           eval "$(/opt/homebrew/bin/brew shellenv)"
         fi
 
+        # glab: PAT from sops, not OAuth (OAuth races under concurrent calls)
+        if [[ -r /run/secrets/gitlab_pat ]]; then
+          export GITLAB_TOKEN="$(cat /run/secrets/gitlab_pat)"
+        fi
+
         # iTerm2 shell integration
         test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
 

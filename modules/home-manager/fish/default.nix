@@ -145,6 +145,11 @@ in
                 set -gx LS_COLORS 'di=34:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'
                 set -gx TERM xterm-256color
 
+                # glab: PAT from sops, not OAuth (OAuth races under concurrent calls)
+                if test -r /run/secrets/gitlab_pat
+                    set -gx GITLAB_TOKEN (cat /run/secrets/gitlab_pat)
+                end
+
              if test -d (brew --prefix)"/share/fish/completions"
             set -p fish_complete_path (brew --prefix)/share/fish/completions
         end
