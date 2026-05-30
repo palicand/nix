@@ -258,10 +258,8 @@
       man-db
       jwt-cli
       openvpn
-      nodejs_20
-      (yarn.override {
-        nodejs = nodejs_20;
-      })
+      nodejs
+      yarn
       tig
       glab # GitLab CLI
       # Bridge GitLab Container Registry auth into Docker / crane via glab's built-in
