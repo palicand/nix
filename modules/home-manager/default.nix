@@ -79,11 +79,11 @@
     ssh = {
       enable = true;
       enableDefaultConfig = false;
-      matchBlocks = {
+      settings = {
         "*" = {
-          controlMaster = "auto";
-          controlPersist = "10m";
-          compression = true;
+          ControlMaster = "auto";
+          ControlPersist = "10m";
+          Compression = true;
         };
       };
     };
