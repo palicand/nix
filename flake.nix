@@ -105,8 +105,7 @@
       );
 
       # Per-repo dev shell. Activated by `.envrc` via nix-direnv.
-      # Holds tooling that should NOT pollute the global user profile —
-      # currently just the sops editing toolkit, only useful inside this repo.
+      # Holds tooling that should NOT pollute the global user profile
       devShells.aarch64-darwin.default =
         let
           pkgs = nixpkgs.legacyPackages.aarch64-darwin;
@@ -115,6 +114,7 @@
           packages = with pkgs; [
             sops
             ssh-to-age
+            nil
           ];
         };
 

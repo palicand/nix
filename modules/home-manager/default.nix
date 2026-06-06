@@ -297,6 +297,8 @@
       graphite-cli # Stacked PRs on top of GitHub
       cf-terraforming
       flarectl # Official Cloudflare CLI
+      rtk
+      codex
     ];
   };
 }
