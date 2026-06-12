@@ -23,14 +23,19 @@
     };
 
     # Render a Nix config fragment with the token interpolated at activation
-    # time. The rendered file lives under /run/secrets-rendered/, so the token
+    # time. The rendered file lives under /run/secrets/rendered/, so the token
     # value never enters the Nix store — only the path-reference does.
-    templates."nix-access-tokens.conf".content = ''
-      access-tokens = github.com=${config.sops.placeholder.github_token}
-    '';
+    # User-owned because flake fetching happens in the user's nix client
+    # process, not the daemon, and `!include` silently skips unreadable files.
+    templates."nix-access-tokens.conf" = {
+      owner = config.system.primaryUser;
+      mode = "0400";
+      content = ''
+        access-tokens = github.com=${config.sops.placeholder.github_token}
+      '';
+    };
   };
 
-  # `!include` makes nix-daemon read the rendered template on each invocation.
   # The path is build-time-known (it's a derivation of the template name);
   # the contents are not.
   nix.extraOptions = ''
