@@ -57,6 +57,20 @@ in
           export HOMEBREW_GITHUB_API_TOKEN="$(cat /run/secrets/github_token)"
         fi
 
+        # bkbn tooling/skills read these as env vars (sops-managed, not universal vars)
+        if [[ -r /run/secrets/gitlab_deploy_token ]]; then
+          export GITLAB_DEPLOY_TOKEN="$(cat /run/secrets/gitlab_deploy_token)"
+        fi
+        if [[ -r /run/secrets/gitlab_deploy_user ]]; then
+          export GITLAB_DEPLOY_USER="$(cat /run/secrets/gitlab_deploy_user)"
+        fi
+        if [[ -r /run/secrets/notion_api_key ]]; then
+          export NOTION_API_KEY="$(cat /run/secrets/notion_api_key)"
+        fi
+        if [[ -r /run/secrets/slack_bot_token ]]; then
+          export SLACK_BOT_TOKEN="$(cat /run/secrets/slack_bot_token)"
+        fi
+
         # iTerm2 shell integration
         test -e "$HOME/.iterm2_shell_integration.zsh" && source "$HOME/.iterm2_shell_integration.zsh"
 

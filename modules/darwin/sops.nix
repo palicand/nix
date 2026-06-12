@@ -1,4 +1,13 @@
 { config, ... }:
+let
+  # Decrypts to /run/secrets/<name> at activation. User-owned so interactive
+  # shells can read it and export the matching env var; the nix-daemon uses the
+  # rendered template below, not these files.
+  userSecret = {
+    owner = config.system.primaryUser;
+    mode = "0400";
+  };
+in
 {
   sops = {
     defaultSopsFile = ../../secrets/tokens.yaml;
@@ -8,18 +17,13 @@
     # sops-nix calls ssh-to-age internally; no key material is duplicated.
     age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
-    # Each `secrets.<name> = { };` decrypts to /run/secrets/<name> at activation.
-    # User-owned so interactive shells can read it to export HOMEBREW_GITHUB_API_TOKEN
-    # (mirrors gitlab_pat). The nix-daemon uses the rendered template below, not this file.
-    secrets.github_token = {
-      owner = config.system.primaryUser;
-      mode = "0400";
-    };
-
-    # glab OAuth races under concurrent calls; a static PAT avoids it. Owned by the user so shells export GITLAB_TOKEN.
-    secrets.gitlab_pat = {
-      owner = config.system.primaryUser;
-      mode = "0400";
+    secrets = {
+      github_token = userSecret; # HOMEBREW_GITHUB_API_TOKEN
+      gitlab_pat = userSecret; # GITLAB_TOKEN; static PAT avoids the glab OAuth race
+      gitlab_deploy_token = userSecret; # GITLAB_DEPLOY_TOKEN (bot_bkbn registry/package pulls)
+      gitlab_deploy_user = userSecret; # GITLAB_DEPLOY_USER
+      notion_api_key = userSecret; # NOTION_API_KEY
+      slack_bot_token = userSecret; # SLACK_BOT_TOKEN
     };
 
     # Render a Nix config fragment with the token interpolated at activation

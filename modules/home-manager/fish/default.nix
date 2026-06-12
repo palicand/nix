@@ -157,6 +157,20 @@ in
                     set -gx HOMEBREW_GITHUB_API_TOKEN (cat /run/secrets/github_token)
                 end
 
+                # bkbn tooling/skills read these as env vars (sops-managed, not universal vars)
+                if test -r /run/secrets/gitlab_deploy_token
+                    set -gx GITLAB_DEPLOY_TOKEN (cat /run/secrets/gitlab_deploy_token)
+                end
+                if test -r /run/secrets/gitlab_deploy_user
+                    set -gx GITLAB_DEPLOY_USER (cat /run/secrets/gitlab_deploy_user)
+                end
+                if test -r /run/secrets/notion_api_key
+                    set -gx NOTION_API_KEY (cat /run/secrets/notion_api_key)
+                end
+                if test -r /run/secrets/slack_bot_token
+                    set -gx SLACK_BOT_TOKEN (cat /run/secrets/slack_bot_token)
+                end
+
              if test -d (brew --prefix)"/share/fish/completions"
             set -p fish_complete_path (brew --prefix)/share/fish/completions
         end
