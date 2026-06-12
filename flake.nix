@@ -115,6 +115,16 @@
             sops
             ssh-to-age
             nil
+            (writeShellScriptBin "rotate" ''
+              set -euo pipefail
+              if [ "$#" -ne 2 ]; then
+                echo "usage: rotate <key> <value>" >&2
+                exit 1
+              fi
+              root=$(${pkgs.git}/bin/git rev-parse --show-toplevel)
+              exec ${pkgs.sops}/bin/sops set "$root/secrets/tokens.yaml" \
+                "[\"$1\"]" "$(printf '%s' "$2" | ${pkgs.jq}/bin/jq -Rs .)"
+            '')
           ];
         };
 
