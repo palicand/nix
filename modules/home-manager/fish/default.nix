@@ -229,6 +229,16 @@ in
             cd "$worktree_dir"
           end
         end
+
+        # In a cmux pane, route `claude` to its teams surface (args pass through);
+        # the agent-launch guard stops cmux re-dispatching the agent it launched.
+        function claude
+          if set -q CMUX_SHELL_INTEGRATION; and not set -q CMUX_AGENT_LAUNCH_KIND
+            cmux claude-teams $argv
+          else
+            command claude $argv
+          end
+        end
       '';
 
       plugins = [
