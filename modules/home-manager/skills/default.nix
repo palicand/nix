@@ -73,17 +73,18 @@ let
   # The CLI's bin resolves node via /usr/bin/env and shells out to git clone;
   # home-manager's activation PATH has neither.
   skillsPath = "${pkgs.nodejs}/bin:${pkgs.git}/bin:$PATH";
+  agentFlags = lib.concatMapStringsSep " " (a: "-a ${a}") (lib.attrNames agentSkillDirs);
 
   # Install a source's skills only when absent from ~/.agents/skills —
   # presence is a filesystem check, so the happy path never invokes npx.
-  # One `skills add` per skill and a single -a value: the CLI misparses
-  # multi-value -s/-a flags; relinkSnippet below links the other agents.
+  # Repeated -a flags: a single agent flips the CLI into copy mode (no
+  # canonical ~/.agents dir); space-separated multi-values misparse.
   installSnippet =
     { source, skills }:
     ''
       for skill in ${lib.concatStringsSep " " skills}; do
         if [ ! -e "$HOME/.agents/skills/$skill" ]; then
-          run env PATH="${skillsPath}" ${npx} -y skills add ${source} -g -s "$skill" -a claude-code -y \
+          run env PATH="${skillsPath}" ${npx} -y skills add ${source} -g -s "$skill" ${agentFlags} -y \
             || echo "warning: skills add $skill from ${source} failed (offline?)"
         fi
       done
