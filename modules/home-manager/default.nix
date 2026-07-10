@@ -11,6 +11,7 @@
     ./zsh
     ./git
     ./fish
+    ./skills
     ./pre-commit.nix
   ];
 
