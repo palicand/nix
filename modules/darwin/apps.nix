@@ -51,6 +51,7 @@
       # Communication
       "signal"
       "slack"
+      "telegram"
       "whatsapp"
       "notion"
 
