@@ -70,21 +70,23 @@ let
   );
 
   npx = "${pkgs.nodejs}/bin/npx";
-  agentNames = lib.concatStringsSep " " (lib.attrNames agentSkillDirs);
+  # The CLI's bin resolves node via /usr/bin/env and shells out to git clone;
+  # home-manager's activation PATH has neither.
+  skillsPath = "${pkgs.nodejs}/bin:${pkgs.git}/bin:$PATH";
 
   # Install a source's skills only when absent from ~/.agents/skills —
   # presence is a filesystem check, so the happy path never invokes npx.
+  # One `skills add` per skill and a single -a value: the CLI misparses
+  # multi-value -s/-a flags; relinkSnippet below links the other agents.
   installSnippet =
     { source, skills }:
     ''
-      missing=""
       for skill in ${lib.concatStringsSep " " skills}; do
-        [ -e "$HOME/.agents/skills/$skill" ] || missing="$missing $skill"
+        if [ ! -e "$HOME/.agents/skills/$skill" ]; then
+          run env PATH="${skillsPath}" ${npx} -y skills add ${source} -g -s "$skill" -a claude-code -y \
+            || echo "warning: skills add $skill from ${source} failed (offline?)"
+        fi
       done
-      if [ -n "$missing" ]; then
-        run ${npx} -y skills add ${source} -g -s $missing -a ${agentNames} -y \
-          || echo "warning: skills add$missing from ${source} failed (offline?)"
-      fi
     '';
 
   # Re-create a missing agent link without reinstalling (a `skills add` re-run
@@ -113,7 +115,7 @@ in
     + lib.concatMapStrings installSnippet externalSkills
     + lib.concatMapStrings relinkSnippet externalSkills
     + lib.optionalString upgradeOnActivation ''
-      run ${npx} -y skills update -g -y || echo "warning: skills update failed (offline?)"
+      run env PATH="${skillsPath}" ${npx} -y skills update -g -y || echo "warning: skills update failed (offline?)"
     ''
   );
 }
