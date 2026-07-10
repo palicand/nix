@@ -352,6 +352,27 @@ gcwt extension-error BKBN-3828-my-feature
 
 **Adding a new tap**: Add as flake input in `flake.nix` (set `flake = false`), add to `nix-homebrew.taps` configuration, then rebuild. Taps are managed as read-only symlinks to /nix/store.
 
+## Agent Skills
+
+Single source of truth for agent skills (Claude Code + Codex), spec in
+`docs/superpowers/specs/2026-07-10-declarative-skills-design.md`.
+
+- **Self-written skills** live in `skills/<name>/SKILL.md` at the repo root.
+  Auto-discovered by `modules/home-manager/skills/default.nix` — adding one is
+  `mkdir skills/<name>` + write `SKILL.md` + `git add` + rebuild. Linked via
+  out-of-store symlinks (`~/.agents/skills/<name>` → repo), so edits are live
+  without a rebuild.
+- **Third-party skills** are declared in `externalSkills` in the same module
+  and installed by `npx skills` during activation, only when missing (brew
+  model: Nix declares, the native CLI installs and owns
+  `~/.agents/.skill-lock.json`). Updates: `npx skills update -g`, or flip
+  `upgradeOnActivation = true` in the module for brew-style
+  update-on-every-switch.
+- Semantics are additive (like `homebrew.onActivation.cleanup = "none"`):
+  ad-hoc `npx skills add` keeps working; codify keepers in `externalSkills`.
+- The `bkbn-ticket-audit/family/show` skills come from the `bkbn-core` plugin,
+  NOT this repo (local copies were retired as stale duplicates).
+
 ## Nix Formatting
 
 Automated formatting with pre-commit hooks using `pre-commit-hooks.nix`.
