@@ -11,7 +11,8 @@
     onActivation = {
       autoUpdate = true;
       upgrade = true;
-      cleanup = "zap"; # Remove packages not in config (zap also removes preferences)
+      # Homebrew 6.0 dropped `brew bundle --force-cleanup`, which nix-darwin still emits for "zap"/"uninstall" (aborting activation). Keep "none" until nix-darwin supports the 6.0 bundle CLI; prune manually with `brew bundle cleanup --file=<Brewfile>`.
+      cleanup = "none";
     };
     global = {
       brewfile = true;
