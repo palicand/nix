@@ -299,6 +299,7 @@
       flarectl # Official Cloudflare CLI
       rtk
       codex
+      inputs.herdr.packages.${pkgs.system}.default # Terminal multiplexer for AI coding agents
     ];
   };
 }
