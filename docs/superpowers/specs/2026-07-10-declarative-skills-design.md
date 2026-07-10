@@ -107,8 +107,13 @@ the skills CLI.
 
 1. Presence is a filesystem check: a skill is installed iff
    `~/.agents/skills/<name>` exists. No `npx` invocation on the happy path.
-2. For each declared source, if any skills are missing →
-   `npx -y skills add <source> -g -s <missing…> -a claude-code codex -y`.
+2. For each declared skill that is missing → one `skills add` per skill:
+   `npx -y skills add <source> -g -s <skill> -a claude-code -a codex -y`,
+   with node and git prepended to PATH (home-manager's activation PATH has
+   neither; the CLI's bin resolves node via `/usr/bin/env` and shells out to
+   `git clone`). Batched `-s a b` / `-a x y` forms misparse, and a single
+   `-a` value flips the CLI into copy mode, which skips the canonical
+   `~/.agents/skills/` dir entirely — both verified live during rollout.
 3. For each declared skill present in `~/.agents/skills/` but missing its link
    in some agent dir, create the symlink directly, matching the CLI's
    convention (relative link, e.g. `~/.codex/skills/ponytail` →
