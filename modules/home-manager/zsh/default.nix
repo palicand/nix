@@ -159,6 +159,8 @@ in
     fzf = {
       enable = true;
       enableFishIntegration = true;
+      # Atuin owns Ctrl-R; keep only fzf's Ctrl-T (file) and Alt-C (cd) widgets
+      historyWidget.command = "";
     };
 
     neovim = {
