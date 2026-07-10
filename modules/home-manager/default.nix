@@ -294,7 +294,8 @@
       ghidra
       protobuf
       gh # GitHub CLI
-      graphite-cli # Stacked PRs on top of GitHub
+      # gt completion emits empty output in the build sandbox in 1.8.6, so installShellCompletion aborts; drop postInstall until nixpkgs fixes darwin completion generation.
+      (graphite-cli.overrideAttrs { postInstall = ""; }) # Stacked PRs on top of GitHub
       cf-terraforming
       flarectl # Official Cloudflare CLI
       rtk
