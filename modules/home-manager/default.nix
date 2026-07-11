@@ -284,6 +284,7 @@
       gradle
       terraform
       (pkgs.callPackage ../../pkgs/claude-code-native/default.nix { })
+      ccusage
       (pkgs.callPackage ../../pkgs/kotlin-lsp/default.nix { })
       cloc
       auth0-cli
