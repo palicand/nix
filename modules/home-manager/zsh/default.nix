@@ -142,7 +142,7 @@ in
 
     starship = {
       enable = true;
-      package = pkgs.starship;
+      package = pkgs.callPackage ../../../pkgs/starship/default.nix { };
       # To use a preset, run: starship preset <name> -o ~/.config/starship.toml
       # Available presets: bracketed-segments, gruvbox-rainbow, jetpack, nerd-font-symbols,
       #                    no-runtime-versions, pastel-powerline, plain-text-symbols, pure-preset, tokyo-night
