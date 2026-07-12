@@ -70,7 +70,7 @@ def main() -> int:
         print(f"  {nix_sys}: {h}")
         # Match within the per-platform attrset only — non-greedy up to the
         # first closing brace so we don't bleed across platforms.
-        pattern = rf'({re.escape(nix_sys)}\s*=\s*\{{[^}}]*?sha256\s*=\s*")[^"]+(")'
+        pattern = rf'({re.escape(nix_sys)}\s*=\s*\{{.*?sha256\s*=\s*")[^"]+(")'
         src, n = re.subn(
             pattern,
             lambda m, h=h: m.group(1) + h + m.group(2),
