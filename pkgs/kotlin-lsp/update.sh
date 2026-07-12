@@ -31,7 +31,20 @@ VERSION="${VERSION#v}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_NIX="$SCRIPT_DIR/default.nix"
-BASE_URL="https://download-cdn.jetbrains.com/kotlin-lsp/${VERSION}"
+BASE_URL=""
+for candidate in \
+  "https://download-cdn.jetbrains.com/language-server/kotlin-server/${VERSION}" \
+  "https://download-cdn.jetbrains.com/kotlin-lsp/${VERSION}"; do
+  if curl -sf "${candidate}/kotlin-server-${VERSION}.tar.gz.sha256" >/dev/null; then
+    BASE_URL="$candidate"
+    break
+  fi
+done
+
+if [[ -z "$BASE_URL" ]]; then
+  echo "Error: Could not find standalone artifacts for version $VERSION"
+  exit 1
+fi
 
 echo "Fetching checksums for version $VERSION..."
 
@@ -71,6 +84,12 @@ CONTENT=$(<"$DEFAULT_NIX")
 # Update version
 CONTENT=$(echo "$CONTENT" | awk -v ver="$VERSION" '
   /^  version = / { print "  version = \"" ver "\";"; next }
+  { print }
+')
+
+# Update the CDN base (JetBrains moved releases after 262.7569.0).
+CONTENT=$(echo "$CONTENT" | awk -v url="${BASE_URL%/$VERSION}" '
+  /^  baseUrl = / { print "  baseUrl = \"" url "/${version}\";"; next }
   { print }
 ')
 
