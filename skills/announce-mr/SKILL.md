@@ -92,6 +92,33 @@ Do NOT use for:
    ```
    And add the index line to `MEMORY.md`.
 
+## Multiple or companion MRs
+
+Sometimes one feature ships as two+ MRs (e.g. a platform half + a service half, or a stacked chain). **Never put more than one URL in a single Slack message** — Slack merges adjacent bare URLs into one combined unfurl, so the second link effectively disappears. One message, one URL, always.
+
+Structure a companion set as a thread so the halves stay grouped and each URL unfurls on its own:
+
+- **Parent message:** the one-sentence feature summary + the *primary* MR's URL on its own line (one URL only).
+- **One thread reply per additional MR:** a short clause naming that half + its URL on its own line. E.g. `Service half (service-crm-integrations): consumes the endpoint in the push resolver.` then the URL.
+- **Then** the caveats as further thread replies, one per reply as usual.
+
+Each MR link and each caveat is its own message. If the MRs are unrelated (not one feature), announce them separately with the full workflow each, rather than threading them together.
+
+When you show the plan for approval, lay the thread out explicitly so the user sees each URL lands in its own message:
+
+```
+Channel: #dev-backend
+Message: ISSUE-2336: Resolve the workspace for Propstack property pushes.
+         https://gitlab.com/.../backend-platform/-/merge_requests/3421
+
+Thread replies:
+  1. Service half (service-crm-integrations): consumes the endpoint.
+     https://gitlab.com/.../backend-services/-/merge_requests/330
+  2. Deploy the platform half before/with the service half; else pushes fail closed.
+
+OK to post?
+```
+
 ## Channel selection rules
 
 | Repo | Channel pattern |
@@ -111,6 +138,7 @@ The `dev-` prefix is the strong heuristic. Never guess silently — propose, get
 - Imperative or descriptive voice: "Add X", "Switch Y to Z" — not "I have added..." or "This MR will..."
 - ISSUE-id (or QA-id) prefix when the branch has one
 - URL on its own line, no Markdown brackets — Slack unfurls bare URLs cleanly
+- **Exactly one URL per message.** Two bare URLs on adjacent lines collapse into a single combined unfurl in Slack — the second link is lost. Additional MRs each get their own message (see Multiple or companion MRs).
 - No emoji, no greetings, no signature
 
 ## What counts as a caveat (thread)
@@ -144,6 +172,7 @@ Even when the user has pre-authorized announcement, show the composed message an
 - **Re-announcing** — if you already posted earlier in the session, stop.
 - **Including the MR description verbatim** — the link unfurls; the headline is the *hook*, not a copy of the body.
 - **Threading trivia** — only post a thread reply if it clears the warrant test (a DO-or-KNOW a teammate wouldn't get from the MR). Default to no caveats; renames, reformats, dep bumps, and small-MR "reviewer hints" don't qualify.
+- **Two URLs in one message** — companion MRs stacked as bare URLs on adjacent lines collapse into one unfurl and the second link is lost. One URL per message; extra MRs go as their own thread replies.
 
 ## Red flags — stop and re-check
 
@@ -151,4 +180,5 @@ Even when the user has pre-authorized announcement, show the composed message an
 - About to post to a channel you picked from memory without verifying it still exists → fine, but if Slack returns "channel not found", ask the user, don't search and pick another silently
 - Any caveat that survives because you bundled nitpicks (renames, reformats, dep bumps) into one "reviewer hint" → that is over-threading; drop it. If each item alone wouldn't clear the warrant test, the bundle doesn't either.
 - About to write a thread reply you can't tie to a concrete DO-or-KNOW for a teammate → STOP, leave it out
+- About to send a message body containing two or more URLs → STOP, split them; one URL per message or the unfurls merge
 - Caveat list is longer than 4 items → likely conflating "things to mention" with "things the reviewer must know"; trim
