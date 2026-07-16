@@ -30,17 +30,6 @@ let
       source = "vercel-labs/skills";
       skills = [ "find-skills" ];
     }
-    {
-      source = "DietrichGebert/ponytail";
-      skills = [
-        "ponytail"
-        "ponytail-audit"
-        "ponytail-debt"
-        "ponytail-gain"
-        "ponytail-help"
-        "ponytail-review"
-      ];
-    }
   ];
 
   homeDir = config.home.homeDirectory;

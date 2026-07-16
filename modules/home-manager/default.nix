@@ -303,6 +303,7 @@
       rtk
       (pkgs.callPackage ../../pkgs/codex/default.nix { })
       inputs.herdr.packages.${pkgs.system}.default # Terminal multiplexer for AI coding agents
+      jackett
     ];
   };
 }

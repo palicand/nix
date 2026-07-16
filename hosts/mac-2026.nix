@@ -5,4 +5,13 @@
   ids.gids.nixbld = 350;
 
   services.ollama.enable = true;
+
+  launchd.user.agents.jackett.serviceConfig = {
+    ProgramArguments = [
+      "${pkgs.jackett}/bin/jackett"
+      "--NoRestart"
+    ];
+    KeepAlive = true;
+    RunAtLoad = true;
+  };
 }
