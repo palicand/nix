@@ -1,4 +1,4 @@
-name: Update claude-code-native
+name: Update package flakes
 
 on:
   schedule:
@@ -11,8 +11,15 @@ permissions:
 
 jobs:
   bump:
-    name: Bump claude-code-native
+    name: Bump ${{ matrix.package }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - claude-code-native
+          - codex
+          - kotlin-lsp
     steps:
       - uses: actions/checkout@v7
 
@@ -22,20 +29,35 @@ jobs:
 
       - name: Run bumper script
         id: bump
-        run: python3 .github/scripts/bump-claude-code-native.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          file="pkgs/${{ matrix.package }}/default.nix"
+          old=$(sed -n 's/^  version = "\([^"]*\)";.*/\1/p' "$file")
+
+          if [[ "${{ matrix.package }}" == "claude-code-native" ]]; then
+            python3 .github/scripts/bump-claude-code-native.py
+          else
+            "pkgs/${{ matrix.package }}/update.sh"
+            new=$(sed -n 's/^  version = "\([^"]*\)";.*/\1/p' "$file")
+            echo "old=$old" >> "$GITHUB_OUTPUT"
+            echo "new=$new" >> "$GITHUB_OUTPUT"
+            [[ "$old" == "$new" ]] && changed=false || changed=true
+            echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Open PR
         if: steps.bump.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          branch: bot/claude-code-native
+          branch: bot/${{ matrix.package }}
           delete-branch: true
-          commit-message: "chore: Update claude-code-native to ${{ steps.bump.outputs.new }}"
-          title: "chore: Update claude-code-native to ${{ steps.bump.outputs.new }}"
+          commit-message: "chore: Update ${{ matrix.package }} to ${{ steps.bump.outputs.new }}"
+          title: "chore: Update ${{ matrix.package }} to ${{ steps.bump.outputs.new }}"
           body: |
-            Bumps `pkgs/claude-code-native` from `${{ steps.bump.outputs.old }}` to `${{ steps.bump.outputs.new }}`.
+            Bumps `pkgs/${{ matrix.package }}` from `${{ steps.bump.outputs.old }}` to `${{ steps.bump.outputs.new }}`.
 
-            Polled from <https://downloads.claude.ai/claude-code-releases/latest>; sha256s recomputed for all four platforms.
+            Checksums were refreshed for all supported platforms.
           labels: |
             dependencies
             automated
