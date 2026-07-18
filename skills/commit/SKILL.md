@@ -162,7 +162,7 @@ Noun describing section of codebase in parentheses:
    Implement OAuth2 authentication with Google provider.
    Includes token refresh and session management.
 
-   Co-Authored-By: Claude <noreply@anthropic.com>
+   Co-Authored-By: <active-agent-name> <active-agent-email>
    EOF
    )"
    ```
@@ -209,7 +209,9 @@ feature/[BKBN-1234] add user authentication endpoint
 ## Important Notes
 
 - Always use HEREDOC for commit messages to preserve formatting
-- Include `Co-Authored-By: Claude <noreply@anthropic.com>` footer
+- Include a `Co-Authored-By` footer identifying the active coding agent,
+  using that agent's canonical name and email. Do not hard-code an agent or
+  provider; replace the placeholders from the workflow example.
 - Run formatters if available before committing (spotlessApply, prettier, etc.)
 - Never commit without showing the proposal first
 - If no changes exist, inform the user and exit
