@@ -10,7 +10,7 @@ nix-darwin [homebrew module][homebrew-module].
 
 **Self-written** (real dirs in `~/.claude/skills/`), migrating into this repo:
 
-- `address-pr-review`, `announce-mr`, `bkbn-implement-tickets`, `bkbn-my-queue`,
+- `address-pr-review`, `announce-pr`, `bkbn-implement-tickets`, `bkbn-my-queue`,
   `commit`, `migrate-gitlab-ci`, `squash-merge`
 
 **Deleted, not migrated**: `bkbn-ticket-audit`, `bkbn-ticket-family`,
@@ -56,7 +56,7 @@ rewrites its state files; project-level skills; Claude Code built-in skills.
 ~/.nixpkgs/
 ├── skills/                          # self-written skills, source of truth
 │   ├── address-pr-review/SKILL.md
-│   ├── announce-mr/…
+│   ├── announce-pr/…
 │   ├── bkbn-implement-tickets/…
 │   ├── bkbn-my-queue/…
 │   ├── commit/…

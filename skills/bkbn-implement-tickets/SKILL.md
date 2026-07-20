@@ -1,13 +1,13 @@
 ---
 name: bkbn-implement-tickets
-description: Use when implementing multiple BKBN Notion tickets in one session — parent ticket with sub-items, list of ticket URLs, or "my assigned tickets ready for development" (Notion Status between Backlog inclusive and Merged exclusive). Drives the full superpowers workflow plus team-coordinated execution; produces one GitLab MR per ticket.
+description: Use when implementing multiple BKBN Notion tickets in one session — parent ticket with sub-items, list of ticket URLs, or "my assigned tickets ready for development" (Notion Status between Backlog inclusive and Merged exclusive). Drives the full superpowers workflow plus team-coordinated execution; produces one GitHub PR per ticket.
 ---
 
 # BKBN Implement Tickets
 
 ## Overview
 
-Take one or more BKBN Notion tickets and ship them as GitLab MRs in a coordinated parallel run.
+Take one or more BKBN Notion tickets and ship them as GitHub PRs in a coordinated parallel run.
 
 **Core principle: a Notion ticket and its referenced spec are the *what*. A plan is the *how*. Never dispatch implementation agents until every ticket has a plan committed to its branch.**
 
@@ -31,13 +31,13 @@ Do NOT use this skill for:
 
 ```
 Step 1  Gather tickets        (notion-fetch + notion-search)
-Step 2  Filter already-MR'd   (glab mr view per linked MR)
+Step 2  Filter already-PR'd   (gh pr view per linked PR)
 Step 3  Build dep graph       (read referenced specs)
 Step 4  Plan per ticket       (REQUIRED SUB-SKILL: superpowers:writing-plans)
         ─── GATE: every plan committed to its branch ───
 Step 5  Create the team       (TeamCreate — NOT bare Agent calls)
 Step 6  Spawn teammates       (Agent with team_name + name; teammate uses superpowers:executing-plans)
-Step 7  Collect MR URLs       (relay to user as teammates report)
+Step 7  Collect PR URLs       (relay to user as teammates report)
 Step 8  Shutdown + cleanup    (SendMessage shutdown_request → TeamDelete)
 ```
 
@@ -55,24 +55,24 @@ Three input forms:
 
 Ready statuses (verify against the actual workspace's Status field): `Backlog`, `Doing`, `In Review`, `Code Review`, `QA`.
 
-## Step 2 — Filter already-MR'd tickets
+## Step 2 — Filter already-PR'd tickets
 
-Each Notion ticket has a `GitLab MRs` property listing related MR URLs. For each:
-- Run `glab mr view <number>` in the right repo
+Each Notion ticket has a `GitHub PRs` property listing related PR URLs. For each:
+- Run `gh pr view <number>` in the right repo
 - `Merged` → skip the ticket entirely
-- `Opened` → ask the user: "skip / write retroactive plan only / redo from scratch"
-- `Closed` (no merge) → treat as "no MR"
+- `Open` → ask the user: "skip / write retroactive plan only / redo from scratch"
+- `Closed` (no merge) → treat as "no PR"
 
-If the user has not stated a preference, default to **skip**. Do not silently overwrite open MRs.
+If the user has not stated a preference, default to **skip**. Do not silently overwrite open PRs.
 
 ## Step 3 — Build dependency graph
 
 Each ticket's body references a spec (typically `docs/superpowers/specs/...md` in `infrastructure-gcp` or the relevant repo). Read those specs to learn:
 - Cross-ticket dependencies (e.g. ticket B's chart consumes ticket A's image)
-- Repos touched per ticket (cross-cutting tickets become multiple MRs across repos)
+- Repos touched per ticket (cross-cutting tickets become multiple PRs across repos)
 - Whether tickets stack (one ticket's branch is another's base)
 
-User's stated convention for stacked branches: "If the work depends on something else, you base it on the parent branch, then gradually as things are merged in GitLab we will rebase." Honor this — don't try to rebase pre-merge.
+User's stated convention for stacked branches: "If the work depends on something else, you base it on the parent branch, then gradually as things are merged in GitHub we will rebase." Honor this — don't try to rebase pre-merge.
 
 Wire the dependency graph into the team's task list using `addBlockedBy` so dependent teammates can't claim work before prerequisites push.
 
@@ -98,7 +98,7 @@ git worktree add -b task/issue-<id>/<slug> .worktrees/<id> <base-branch>
 
 Branch convention: from the ticket's `Branch Command` Notion field (typically `task/issue-<id>/<description>` or `feature/issue-<id>/<description>`).
 
-For multi-ticket epics with shared context, **one combined plan with sub-projects (A, B, C…)** is acceptable — but each sub-project must be self-contained (own branch, own MR, own validation gate) **AND must contain at least 3 numbered tasks, each with its own code block and its own validation command**. Anything thinner means you're collapsing 9 tickets into 9 one-liners — write separate plans instead.
+For multi-ticket epics with shared context, **one combined plan with sub-projects (A, B, C…)** is acceptable — but each sub-project must be self-contained (own branch, own PR, own validation gate) **AND must contain at least 3 numbered tasks, each with its own code block and its own validation command**. Anything thinner means you're collapsing 9 tickets into 9 one-liners — write separate plans instead.
 
 **STOP gate after Step 4:** open every plan file. Search for `TBD`, `TODO`, `<placeholder>`, "implement later". If any task lacks a code block or validation command, fix the plan before continuing. The writing-plans skill documents what counts as a placeholder — none of those are allowed. Additionally check **decomposition density**: every sub-project must have ≥3 tasks; each task must have its own validation command (not "see Task N" reuse). If a sub-project has <3 tasks or shared validation across tasks, you've built the plan for an audience that doesn't exist — split or expand.
 
@@ -135,27 +135,27 @@ Teammate prompt MUST include:
 2. The plan file path (already committed in Step 4)
 3. The worktree path (already created in Step 4)
 4. **REQUIRED SUB-SKILL for the teammate:** invoke `superpowers:executing-plans` and follow it task-by-task, committing per task
-5. How to commit and create the MR — prefer `/bkbn-commit` and `/bkbn-mr` slash skills if available; fall back to `git commit` + `glab mr create`
-6. Instruction to `SendMessage` the team-lead with the MR URL on completion
+5. How to commit and create the PR — prefer `/bkbn-commit` and `/bkbn-pr` slash skills if available; fall back to `git commit` + `gh pr create`
+6. Instruction to `SendMessage` the team-lead with the PR URL on completion
 7. For dependent sub-projects: instruction to also `SendMessage` the team-lead the moment the branch is pushed (so the lead can spawn the next teammate in the chain)
 
 For dependent sub-projects, **do not pre-spawn**. Spawn the dependent teammate only after the upstream teammate confirms its branch is pushed. Otherwise the dependent's worktree-add will fail.
 
-## Step 7 — Collect MR URLs
+## Step 7 — Collect PR URLs
 
-As teammates SendMessage with MR URLs:
-- `TaskUpdate` the corresponding task to `completed` with `metadata.mr_url`
-- Acknowledge to the user with the running list of MRs
+As teammates SendMessage with PR URLs:
+- `TaskUpdate` the corresponding task to `completed` with `metadata.pr_url`
+- Acknowledge to the user with the running list of PRs
 
 Stale idle pings from teammates are normal — do not chase them. They mean "I'm done with my turn; ping me if you need anything." See the team docs.
 
 ## Step 8 — Shutdown + cleanup
 
-When all teammates have reported MR URLs and gone idle:
+When all teammates have reported PR URLs and gone idle:
 1. SendMessage each teammate a `shutdown_request`
 2. Wait for `teammate_terminated` notifications
 3. `TeamDelete` to remove the team directory and task list
-4. Final report to the user: every MR URL, ideally as a stack diagram for stacked branches
+4. Final report to the user: every PR URL, ideally as a stack diagram for stacked branches
 
 ## Anti-pattern table — STOP and reset if you catch yourself thinking these
 
@@ -219,9 +219,9 @@ If the workspace adds a new Status value, add it to the filter list explicitly. 
 
 - Branch: `task/[ISSUE-XXXX] <description>` from the ticket's Branch Command field
 - Worktree: `<repo>/.worktrees/<id>/`
-- Commit message: short title only, no body (squash-merge collapses these; only the MR description matters). Exception: commits direct on master/main can have a body.
-- MR body: `## Summary` (1-3 bullets), `## Ticket` (Notion link + parent), `## Test plan` (markdown checklist), `🤖 Generated with [Claude Code](https://claude.com/claude-code)` footer
-- Slash skills available to teammates: `/bkbn-commit`, `/bkbn-mr`, `/bkbn-feature-branch`, `/bkbn-fix-ci`, `/bkbn-fix-review`
+- Commit message: short title only, no body (squash-merge collapses these; only the PR description matters). Exception: commits direct on master/main can have a body.
+- PR body: `## Summary` (1-3 bullets), `## Ticket` (Notion link + parent), `## Test plan` (markdown checklist), `🤖 Generated with [Claude Code](https://claude.com/claude-code)` footer
+- Slash skills available to teammates: `/bkbn-commit`, `/bkbn-pr`, `/bkbn-feature-branch`, `/bkbn-fix-ci`, `/address-pr-review`
 
 ## Common mistakes
 
@@ -230,8 +230,8 @@ If the workspace adds a new Status value, add it to the filter list explicitly. 
 | Spawning a teammate before its plan file exists | Hard-block on Step 4 STOP gate. Plan must exist *and be committed* before teammate spawn. |
 | Pre-spawning dependent teammates with `addBlockedBy` and hoping they wait | Don't. Spawn the dependent teammate AFTER the upstream branch is pushed. The upstream teammate's SendMessage is your trigger. |
 | Forgetting to set `addBlockedBy` on dependent tasks | Wire it in Step 5. The task list is the record of dependencies. |
-| Targeting `--target-branch master` for a stacked MR | Use `--target-branch <upstream-branch>` so the diff shows just this MR's delta. Document the rebase requirement in the MR body. |
-| Skipping the retroactive plan for an open MR (Step 2 case) | If the user opted to add an open MR to the plan-only batch, write the retroactive plan and push it as an additional commit on the existing branch. |
+| Targeting `--base master` for a stacked PR | Use `--base <upstream-branch>` so the diff shows just this PR's delta. Document the rebase requirement in the PR body. |
+| Skipping the retroactive plan for an open PR (Step 2 case) | If the user opted to add an open PR to the plan-only batch, write the retroactive plan and push it as an additional commit on the existing branch. |
 | Burning the cache pinging idle teammates | Ignore stale idle notifications. They mean "available for work" not "needs response." |
 
 ## Real-world impact
@@ -247,6 +247,6 @@ The retrospective on that session is what generated this skill. The rationalizat
 ## When NOT to use
 
 - Single ticket — use `/bkbn-feature-branch` + writing-plans manually, no team needed
-- Non-BKBN repos — no Notion ticket, no GitLab pipeline conventions
+- Non-BKBN repos — no Notion ticket or BKBN GitHub workflow conventions
 - Research/spike tickets — different workflow (brainstorming-heavy, low code output)
-- Tickets with manual-only work (e.g. Auth0 dashboard tweak) — describe in MR body, no team
+- Tickets with manual-only work (e.g. Auth0 dashboard tweak) — describe in PR body, no team

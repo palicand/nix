@@ -80,7 +80,7 @@ jobs:
           git tag "production${APP_SUFFIX:+-$APP_SUFFIX}-$TS" master && git push origin --tags
 ```
 
-Caveat: during the mirror window this pushes to **GitLab** (source of truth), so cut-release stays a GitLab CI job until cutover if the repo still has GitLab CI; the Actions version activates at cutover. The **watcher** below moves to Actions immediately (the mirror delivers the branch).
+The cut-release workflow pushes the release branch directly to GitHub. Keep the legacy GitLab cut-release job disabled once this workflow is enabled so only one system creates release branches.
 
 **2. `release.yml`** — the watcher. Replaces the Cloud Build trigger:
 
@@ -142,7 +142,7 @@ Verify the actual XML output path from the repo's gradle config before assuming 
 
 - **Sonar:** `SonarSource/sonarqube-scan-action` (SonarCloud), `SONAR_TOKEN` org secret, `fetch-depth: 0`. GitLab gated it manual — keep it non-blocking (`continue-on-error` or separate manual workflow).
 - **OWASP:** `./gradlew dependencyCheckAnalyze` gated by repo var `RUN_OWASP_CHECKS`, scheduled (`on: schedule`) not per-PR, `continue-on-error` for the full check. NVD API key as secret speeds it up.
-- **Claude review:** port of `claude-code-review.yml` — use the official `anthropics/claude-code-action` on `pull_request` instead of the hand-rolled glab script; `ANTHROPIC_API_KEY` org secret. The glab/MR-comment plumbing does not port — the action comments natively on PRs.
+- **Claude review:** port of `claude-code-review.yml` — use the official `anthropics/claude-code-action` on `pull_request` instead of the hand-rolled legacy review script; `ANTHROPIC_API_KEY` org secret. The action comments natively on PRs.
 
 ## CI images (infrastructure-gitlab-ci/images/)
 

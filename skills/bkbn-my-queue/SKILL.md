@@ -111,6 +111,6 @@ per-bucket counts, then the **Ready to develop** list (id + title + project), an
 - Read-only. Never write to Notion.
 - If the Notion MCP connector is unavailable (can happen in headless/cron runs that lack the
   interactive claude.ai auth), say so plainly and stop — do not fabricate ticket data.
-- Related: the `bkbn-ticket-audit` skill cross-checks these Notion statuses against real GitLab MR
-  state (e.g. "Code Review in Notion but the MR already merged"). Offer it when the user wants truth
-  from GitLab rather than from Notion.
+- Related: the `bkbn-ticket-audit` skill cross-checks these Notion statuses against real GitHub PR
+  state (e.g. "Code Review in Notion but the PR already merged"). Offer it when the user wants truth
+  from GitHub rather than from Notion.

@@ -27,7 +27,7 @@ Spec: `docs/superpowers/specs/2026-07-10-declarative-skills-design.md`
 ### Task 1: Move self-written skills into the repo
 
 **Files:**
-- Create: `skills/address-pr-review/`, `skills/announce-mr/`, `skills/bkbn-implement-tickets/`, `skills/bkbn-my-queue/`, `skills/commit/`, `skills/migrate-gitlab-ci/`, `skills/squash-merge/` (copied wholesale from `~/.claude/skills/`)
+- Create: `skills/address-pr-review/`, `skills/announce-pr/`, `skills/bkbn-implement-tickets/`, `skills/bkbn-my-queue/`, `skills/commit/`, `skills/migrate-gitlab-ci/`, `skills/squash-merge/` (copied wholesale from `~/.claude/skills/`)
 
 **Interfaces:**
 - Produces: `~/.nixpkgs/skills/<name>/SKILL.md` for the 7 names above — Task 2's module auto-discovers exactly these directory names via `builtins.readDir`.
@@ -38,7 +38,7 @@ Spec: `docs/superpowers/specs/2026-07-10-declarative-skills-design.md`
 
 ```bash
 mkdir -p ~/.nixpkgs/skills
-for s in address-pr-review announce-mr bkbn-implement-tickets bkbn-my-queue commit migrate-gitlab-ci squash-merge; do
+for s in address-pr-review announce-pr bkbn-implement-tickets bkbn-my-queue commit migrate-gitlab-ci squash-merge; do
   cp -R ~/.claude/skills/$s ~/.nixpkgs/skills/$s
 done
 ```
@@ -247,13 +247,13 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>" -- modules/home-manager/
 
 - [ ] **Step 1: Safety check — repo copies exist before deleting originals**
 
-Run: `for s in address-pr-review announce-mr bkbn-implement-tickets bkbn-my-queue commit migrate-gitlab-ci squash-merge; do [ -f ~/.nixpkgs/skills/$s/SKILL.md ] || echo "ABORT: $s missing from repo"; done; echo done`
+Run: `for s in address-pr-review announce-pr bkbn-implement-tickets bkbn-my-queue commit migrate-gitlab-ci squash-merge; do [ -f ~/.nixpkgs/skills/$s/SKILL.md ] || echo "ABORT: $s missing from repo"; done; echo done`
 Expected: only `done`. Any `ABORT` line → stop, fix Task 1.
 
 - [ ] **Step 2: Delete the 7 moved originals and the 3 stale bkbn dupes**
 
 ```bash
-for s in address-pr-review announce-mr bkbn-implement-tickets bkbn-my-queue commit migrate-gitlab-ci squash-merge \
+for s in address-pr-review announce-pr bkbn-implement-tickets bkbn-my-queue commit migrate-gitlab-ci squash-merge \
          bkbn-ticket-audit bkbn-ticket-family bkbn-ticket-show; do
   rm -rf ~/.claude/skills/$s
 done

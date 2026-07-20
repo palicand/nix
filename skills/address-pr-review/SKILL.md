@@ -20,7 +20,6 @@ A reviewer (human or bot) has left comments on a GitHub PR. Each comment is a *s
 Do NOT use for:
 - Comments on a PR the user hasn't opened yet (the comments don't exist; this is a different task)
 - General code review work where you are the reviewer (use review / pr-review-toolkit instead)
-- GitLab MRs — `gh` won't work there; use `bkbn-fix-review` if it's a BKBN repo
 
 ## Inputs you need to know
 

@@ -32,8 +32,8 @@ Porting guide for converting BKBN repos from GitLab CI (+ Cloud Build) to GitHub
 1. **Inventory:** read `.gitlab-ci.yml` + every `include:` source (`infrastructure-gcp/gitlab-ci/`, `infrastructure-gitlab-ci/`), all `cloudbuild*.yaml`, AND grep `infrastructure-gcp/modules/ci_cd/*.tf` for this repo's triggers — the Cloud Build side IS part of the pipeline. Note branch regexes, substitutions, scheduled pipelines, and GitLab CI variables consumed (`$VAR` not defined in-file = project/group variable to map). Watch for **fake variables**: GitLab does not shell-expand values, so `VAR: $(date ...)` is a literal no-op string — don't dutifully map those; port the intent.
 2. **Map each job** using the tables in `porting-reference.md`. Decide: library caller vs hand-rolled (invariant 4).
 3. **Write workflows** under `.github/workflows/`. PR checks on `pull_request`; master jobs on `push: branches: [master|main]`; release per invariant 5.
-4. **Pair the infra change:** if the deploy path moves, write the `infrastructure-gcp` MR deleting the trigger (+ adding the repo's WIF SA/bindings if missing) alongside.
-5. **Validate via the mirror dev-loop:** author on a normal GitLab feature branch → mirror carries it to GitHub → check the Actions tab on the mirror → merge the MR in GitLab. Never commit workflow edits on GitHub directly (only exception: `infra-github` itself, which is GitHub-only). **Caveat:** mirror pushes fire only `push`-triggered workflows — mirroring never creates GitHub PRs, so `pull_request` workflows produce zero runs pre-cutover. To observe one green: open a temporary GitHub-side validation PR on the mirror from the mirrored branch (PRs are metadata — the read-only ruleset doesn't block them), watch the run, close without merging. Otherwise static validation (actionlint) is the pre-cutover bar and the first real post-cutover PR is the live proof — state which one the MR relied on.
+4. **Pair the infra change:** if the deploy path moves, write the `infrastructure-gcp` PR deleting the trigger (+ adding the repo's WIF SA/bindings if missing) alongside.
+5. **Validate on GitHub:** author on a normal GitHub feature branch, open a PR, and verify its Actions checks. Merge only after the required checks pass. Also validate default-branch and release triggers with `actionlint` where they cannot safely be exercised from the PR.
 6. **Dual-run:** CI (build/test) may run green on both systems until cutover; deploy must not (invariant 6).
 
 ## Common mistakes (all observed in baseline testing)
@@ -47,13 +47,13 @@ Porting guide for converting BKBN repos from GitLab CI (+ Cloud Build) to GitHub
 | Leaving "double deploy during mirror window" as an open question | Resolved by design: paired trigger removal, one deploy path (invariant 6) |
 | Wiring WIF against the `bkbnlab` pool or minting a new pool per repo | Use the canonical `bkbn-com` pool/provider from `infrastructure-gcp` |
 | Switching deploy mechanism (e.g. kubectl → ArgoCD) "while we're at it" | Replicate what Cloud Build did; mechanism changes are separate tickets |
-| Assuming `[skip ci]` works everywhere | GitHub honors it on `push` only, not `pull_request` — usually acceptable, note it in the MR |
-| Enabling gitleaks full-history scan and failing on legacy hits | Scan the PR diff / shallow range; committed-secret cleanup is ISSUE-2297, not your MR |
+| Assuming `[skip ci]` works everywhere | GitHub honors it on `push` only, not `pull_request` — usually acceptable, note it in the PR |
+| Enabling gitleaks full-history scan and failing on legacy hits | Scan the PR diff / shallow range; committed-secret cleanup is ISSUE-2297, not your PR |
 
 ## Definition of done (per repo)
 
-- [ ] Actions green on a real PR and on default-branch push (check the mirror's Actions tab) — for library-consuming repos this requires the infra-github library merged and tagged first
+- [ ] Actions green on a real PR and on default-branch push — for library-consuming repos this requires the infra-github library merged and tagged first
 - [ ] Release path proven per invariant 5, or explicitly N/A (master-only repo) or deferred (be/fe exception)
 - [ ] No SA keys in secrets; no GitLab CI variable left unmapped (each → org/repo/env secret, var, or retired)
-- [ ] Paired infrastructure-gcp MR merged if a deploy moved
+- [ ] Paired infrastructure-gcp PR merged if a deploy moved
 - [ ] GitLab CI kept green (dual-run) unless the ticket says otherwise
