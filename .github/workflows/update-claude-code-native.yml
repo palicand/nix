@@ -23,10 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.x"
-
       - name: Run bumper script
         id: bump
         env:
@@ -35,16 +31,12 @@ jobs:
           file="pkgs/${{ matrix.package }}/default.nix"
           old=$(sed -n 's/^  version = "\([^"]*\)";.*/\1/p' "$file")
 
-          if [[ "${{ matrix.package }}" == "claude-code-native" ]]; then
-            python3 .github/scripts/bump-claude-code-native.py
-          else
-            "pkgs/${{ matrix.package }}/update.sh"
-            new=$(sed -n 's/^  version = "\([^"]*\)";.*/\1/p' "$file")
-            echo "old=$old" >> "$GITHUB_OUTPUT"
-            echo "new=$new" >> "$GITHUB_OUTPUT"
-            [[ "$old" == "$new" ]] && changed=false || changed=true
-            echo "changed=$changed" >> "$GITHUB_OUTPUT"
-          fi
+          "pkgs/${{ matrix.package }}/update.sh"
+          new=$(sed -n 's/^  version = "\([^"]*\)";.*/\1/p' "$file")
+          echo "old=$old" >> "$GITHUB_OUTPUT"
+          echo "new=$new" >> "$GITHUB_OUTPUT"
+          [[ "$old" == "$new" ]] && changed=false || changed=true
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
 
       - name: Open PR
         if: steps.bump.outputs.changed == 'true'
