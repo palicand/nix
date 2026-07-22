@@ -93,6 +93,19 @@
           specialArgs = { inherit inputs nixpkgs; };
         };
 
+      mkLlamaCppModelSyncCheck =
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          modelSync = pkgs.callPackage ./modules/darwin/llama-cpp-model-sync.nix { };
+        in
+        pkgs.runCommand "llama-cpp-model-sync-test" { } ''
+          ${pkgs.python3}/bin/python \
+            ${./tests/llama-cpp-model-sync.py} \
+            ${modelSync}/bin/llama-cpp-model-sync
+          touch "$out"
+        '';
+
     in
     {
       checks = listToAttrs (
@@ -101,6 +114,7 @@
           name = system;
           value = {
             darwin = self.darwinConfigurations.uber-mac.config.system.build.toplevel;
+            llama-cpp-model-sync = mkLlamaCppModelSyncCheck system;
           };
         }) nixpkgs.lib.platforms.darwin)
         ++
