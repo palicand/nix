@@ -115,6 +115,9 @@
           value = {
             darwin = self.darwinConfigurations.uber-mac.config.system.build.toplevel;
             llama-cpp-model-sync = mkLlamaCppModelSyncCheck system;
+          }
+          // nixpkgs.lib.optionalAttrs (system == "aarch64-darwin") {
+            mac-2026 = self.darwinConfigurations.mac-2026.config.system.build.toplevel;
           };
         }) nixpkgs.lib.platforms.darwin)
         ++
