@@ -106,6 +106,13 @@
           touch "$out"
         '';
 
+      mkLlamaCppModuleCheck =
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        pkgs.callPackage ./tests/llama-cpp-module.nix { };
+
     in
     {
       checks = listToAttrs (
@@ -114,6 +121,7 @@
           name = system;
           value = {
             darwin = self.darwinConfigurations.uber-mac.config.system.build.toplevel;
+            llama-cpp-module = mkLlamaCppModuleCheck system;
             llama-cpp-model-sync = mkLlamaCppModelSyncCheck system;
           }
           // nixpkgs.lib.optionalAttrs (system == "aarch64-darwin") {

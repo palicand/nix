@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
@@ -13,6 +14,8 @@ from urllib.parse import parse_qs, urlsplit
 class RouterHandler(BaseHTTPRequestHandler):
     models = {"keep/model:Q4", "old/model:Q4"}
     mutations = []
+    unload_status = 200
+    delete_status = 200
 
     def log_message(self, _format, *_args):
         pass
@@ -44,6 +47,12 @@ class RouterHandler(BaseHTTPRequestHandler):
         model = self.read_model()
         if self.path == "/models/unload":
             self.mutations.append(("POST", self.path, model))
+            if self.unload_status != 200:
+                self.send_json(
+                    self.unload_status,
+                    {"error": "model is not loaded"},
+                )
+                return
             self.send_json(200, {"success": True})
             return
         if self.path == "/models":
@@ -60,11 +69,30 @@ class RouterHandler(BaseHTTPRequestHandler):
             return
         model = parse_qs(parsed.query)["model"][0]
         self.mutations.append(("DELETE", parsed.path, model))
+        if self.delete_status != 200:
+            self.send_json(self.delete_status, {"error": "delete failed"})
+            return
         self.models.discard(model)
         self.send_json(200, {"success": True})
 
 
-def run_sync(binary, base_url, models_file):
+class HangingRouterHandler(BaseHTTPRequestHandler):
+    request_accepted = threading.Event()
+    release_response = threading.Event()
+
+    def log_message(self, _format, *_args):
+        pass
+
+    def do_GET(self):
+        self.request_accepted.set()
+        self.release_response.wait()
+
+
+class TestHTTPServer(ThreadingHTTPServer):
+    daemon_threads = True
+
+
+def run_sync(binary, base_url, models_file, extra_env=None, timeout=10):
     env = os.environ.copy()
     env.update(
         {
@@ -74,12 +102,15 @@ def run_sync(binary, base_url, models_file):
             "LLAMA_CPP_RETRY_DELAY": "0",
         }
     )
+    if extra_env:
+        env.update(extra_env)
     return subprocess.run(
         [binary],
         env=env,
         check=False,
         capture_output=True,
         text=True,
+        timeout=timeout,
     )
 
 
@@ -90,7 +121,11 @@ def require(condition, message):
 
 def main():
     sync_binary = sys.argv[1]
-    server = ThreadingHTTPServer(("127.0.0.1", 0), RouterHandler)
+    RouterHandler.models = {"keep/model:Q4", "old/model:Q4"}
+    RouterHandler.mutations = []
+    RouterHandler.unload_status = 200
+    RouterHandler.delete_status = 200
+    server = TestHTTPServer(("127.0.0.1", 0), RouterHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     base_url = f"http://127.0.0.1:{server.server_port}"
@@ -124,6 +159,28 @@ def main():
             f"second run was not idempotent: {RouterHandler.mutations}",
         )
 
+        RouterHandler.models.add("old/model:Q4")
+        RouterHandler.mutations.clear()
+        RouterHandler.unload_status = 404
+        already_unloaded = run_sync(sync_binary, base_url, models_file)
+        require(already_unloaded.returncode == 0, already_unloaded.stderr)
+        require(
+            already_unloaded.stderr == "",
+            f"already-unloaded error was not suppressed: {already_unloaded.stderr}",
+        )
+        require(
+            RouterHandler.models == {"keep/model:Q4", "new/model:Q4"},
+            f"already-unloaded model was not deleted: {RouterHandler.models}",
+        )
+
+        RouterHandler.models.add("old/model:Q4")
+        RouterHandler.mutations.clear()
+        RouterHandler.unload_status = 200
+        RouterHandler.delete_status = 500
+        delete_failed = run_sync(sync_binary, base_url, models_file)
+        require(delete_failed.returncode != 0, "failed DELETE unexpectedly passed")
+        RouterHandler.delete_status = 200
+
         server.shutdown()
         server.server_close()
         thread.join()
@@ -132,6 +189,54 @@ def main():
         require(
             "not ready after 2 attempts" in unreachable.stderr,
             f"missing timeout diagnostic: {unreachable.stderr}",
+        )
+
+        HangingRouterHandler.request_accepted.clear()
+        HangingRouterHandler.release_response.clear()
+        hanging_server = TestHTTPServer(("127.0.0.1", 0), HangingRouterHandler)
+        hanging_thread = threading.Thread(
+            target=hanging_server.serve_forever,
+            daemon=True,
+        )
+        hanging_thread.start()
+        hanging_url = f"http://127.0.0.1:{hanging_server.server_port}"
+        started = time.monotonic()
+        try:
+            hanging = run_sync(
+                sync_binary,
+                hanging_url,
+                models_file,
+                {
+                    "LLAMA_CPP_CONNECT_TIMEOUT": "1",
+                    "LLAMA_CPP_REQUEST_TIMEOUT": "1",
+                    "LLAMA_CPP_MAX_ATTEMPTS": "1",
+                },
+                timeout=3,
+            )
+        finally:
+            HangingRouterHandler.release_response.set()
+            hanging_server.shutdown()
+            hanging_server.server_close()
+            hanging_thread.join()
+        elapsed = time.monotonic() - started
+        require(
+            HangingRouterHandler.request_accepted.is_set(),
+            "hanging server never accepted a request",
+        )
+        require(hanging.returncode != 0, "hanging server unexpectedly passed")
+        require(elapsed < 3, f"hanging request was not bounded: {elapsed:.2f}s")
+
+        invalid_timeout = run_sync(
+            sync_binary,
+            base_url,
+            models_file,
+            {"LLAMA_CPP_CONNECT_TIMEOUT": "0"},
+        )
+        require(invalid_timeout.returncode != 0, "zero connect timeout passed")
+        require(
+            "LLAMA_CPP_CONNECT_TIMEOUT must be a positive integer"
+            in invalid_timeout.stderr,
+            f"missing timeout validation diagnostic: {invalid_timeout.stderr}",
         )
 
     print("llama-cpp model sync tests passed")

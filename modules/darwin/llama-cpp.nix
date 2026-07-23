@@ -7,7 +7,9 @@
 
 let
   inherit (lib)
+    all
     any
+    hasInfix
     hasPrefix
     mkEnableOption
     mkIf
@@ -19,21 +21,55 @@ let
   cfg = config.services.llama-cpp;
   modelSync = pkgs.callPackage ./llama-cpp-model-sync.nix { };
   modelsFile = pkgs.writeText "llama-cpp-models.json" (builtins.toJSON cfg.models);
-  syncHost = if cfg.host == "0.0.0.0" then "127.0.0.1" else cfg.host;
+  syncHost =
+    if
+      builtins.elem cfg.host [
+        "0.0.0.0"
+        "::"
+        "0:0:0:0:0:0:0:0"
+      ]
+    then
+      if hasInfix ":" cfg.host then "::1" else "127.0.0.1"
+    else
+      cfg.host;
+  syncUrlHost = if hasInfix ":" syncHost then "[${syncHost}]" else syncHost;
   forbiddenExtraArgs = [
     "-m"
     "--model"
+    "-mu"
+    "--model-url"
+    "-dr"
+    "--docker-repo"
     "-hf"
     "-hfr"
     "--hf-repo"
+    "-hff"
+    "--hf-file"
     "--models-dir"
     "--models-preset"
     "--host"
     "--port"
   ];
+  forbiddenEnvironmentVariables = [
+    "LLAMA_ARG_MODEL"
+    "LLAMA_ARG_MODEL_URL"
+    "LLAMA_ARG_DOCKER_REPO"
+    "LLAMA_ARG_HF_REPO"
+    "LLAMA_ARG_HF_FILE"
+    "LLAMA_ARG_MODELS_DIR"
+    "LLAMA_ARG_MODELS_PRESET"
+    "LLAMA_ARG_HOST"
+    "LLAMA_ARG_PORT"
+  ];
   extraArgsSelectModelOrEndpoint = any (
     arg: any (forbiddenArg: arg == forbiddenArg || hasPrefix "${forbiddenArg}=" arg) forbiddenExtraArgs
   ) cfg.extraArgs;
+  environmentSelectsModelOrEndpoint = any (
+    name: builtins.hasAttr name cfg.environmentVariables
+  ) forbiddenEnvironmentVariables;
+  modelsAreLineSafe = all (
+    model: model != "" && !hasInfix "\n" model && !hasInfix "\r" model
+  ) cfg.models;
 in
 {
   options.services.llama-cpp = {
@@ -94,9 +130,19 @@ in
         message = "services.llama-cpp.models must not contain duplicates";
       }
       {
+        assertion = modelsAreLineSafe;
+        message = "services.llama-cpp.models must not contain empty strings or newlines";
+      }
+      {
         assertion = !extraArgsSelectModelOrEndpoint;
         message = ''
           services.llama-cpp.extraArgs must not contain model-source, host, or port arguments
+        '';
+      }
+      {
+        assertion = !environmentSelectsModelOrEndpoint;
+        message = ''
+          services.llama-cpp.environmentVariables must not override model-source, host, or port settings
         '';
       }
     ];
@@ -126,7 +172,7 @@ in
     launchd.user.agents.llama-cpp-model-sync.serviceConfig = {
       ProgramArguments = [ "${modelSync}/bin/llama-cpp-model-sync" ];
       EnvironmentVariables = {
-        LLAMA_CPP_BASE_URL = "http://${syncHost}:${toString cfg.port}";
+        LLAMA_CPP_BASE_URL = "http://${syncUrlHost}:${toString cfg.port}";
         LLAMA_CPP_MODELS_FILE = "${modelsFile}";
       };
       RunAtLoad = true;
