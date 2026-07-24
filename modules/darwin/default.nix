@@ -22,7 +22,7 @@
   ];
   imports = [
     ../common.nix
-    ./ollama.nix
+    ./llama-cpp.nix
     ./charging-chime.nix
     ./filevault.nix
   ];
