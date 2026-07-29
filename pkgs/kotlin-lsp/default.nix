@@ -6,26 +6,26 @@
 }:
 
 let
-  version = "262.8190.0";
+  version = "262.9593.0";
 
   baseUrl = "https://download-cdn.jetbrains.com/language-server/kotlin-server/${version}";
 
   sources = {
     aarch64-darwin = {
       url = "${baseUrl}/kotlin-server-${version}-aarch64.sit";
-      sha256 = "e20183262784bb7e665ce1aea4855872a8b16f211ebb478d452773553732d9fb";
+      sha256 = "6ba6021a706b21e64cef33f7e2b79f187c0910320722bb2d3ed05ad1115ec43f";
     };
     x86_64-darwin = {
       url = "${baseUrl}/kotlin-server-${version}.sit";
-      sha256 = "f3845ae9ee38c22ef5e436390d86a3d908f77073e9667fa643a5ae0957c19728";
+      sha256 = "17369fda97c85418ac24ab38a9df56b21522a3468dfe193832fe455c13920745";
     };
     aarch64-linux = {
       url = "${baseUrl}/kotlin-server-${version}-aarch64.tar.gz";
-      sha256 = "c3edd59ef34a7faa4d04f3517afb7a932b19c3f9cf17d1a14e9da17b0b5440ad";
+      sha256 = "2317831c6e5607d05b7ebc1da655330125ce0e3d66fbf24517dfce442debc14e";
     };
     x86_64-linux = {
       url = "${baseUrl}/kotlin-server-${version}.tar.gz";
-      sha256 = "8b4c70e95065420e7867c99aaf9f18e0b4e76311ec453e4c1a39e3f6ae774cbf";
+      sha256 = "2d99d8e198fbe4aa8f4481e37799724ce94803b4ea12a60b416040e3fcd7cc5e";
     };
   };
 
