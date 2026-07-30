@@ -20,12 +20,11 @@
       inputs.brew-src.follows = "brew-src";
     };
 
-    # Pin Homebrew core to a known-good version. Override of nix-homebrew's
-    # transitive brew-src input. 5.1.7/5.1.8 ship a regression in
-    # cask_struct_generator.rb (`to_sym` on nil for bare `depends :macos`);
-    # fixed upstream in 5.1.9 (Homebrew/brew@1c8cbf3).
+    # Pin Homebrew core to a known-good version. Override nix-homebrew's
+    # transitive brew-src input so the parser stays compatible with the
+    # structured cask artifacts served by Homebrew's API.
     brew-src = {
-      url = "github:Homebrew/brew/5.1.10";
+      url = "github:Homebrew/brew/6.0.13";
       flake = false;
     };
 

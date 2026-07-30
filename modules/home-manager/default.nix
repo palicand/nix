@@ -279,7 +279,7 @@
       kubernetes-helm
       argocd
       openssl
-      jdk21_headless
+      jdk25_headless
       async-profiler
       gradle
       terraform

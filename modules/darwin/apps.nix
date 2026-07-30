@@ -26,6 +26,7 @@
     # Taps are now managed by nix-homebrew in flake.nix
     casks = [
       # Development tools
+      "gitkraken"
       "jetbrains-toolbox"
       "lens"
       "postman"
