@@ -44,7 +44,6 @@
       "cmux"
       "ghostty"
       "crossover"
-      "wispr-flow"
 
       # Security & Privacy
       "mullvad-vpn"
