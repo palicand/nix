@@ -122,15 +122,6 @@ in
           fi
         }
 
-        # In a cmux pane, route `claude` to its teams surface (args pass through);
-        # the agent-launch guard stops cmux re-dispatching the agent it launched.
-        claude() {
-          if [[ -n "$CMUX_SHELL_INTEGRATION" && -z "$CMUX_AGENT_LAUNCH_KIND" ]]; then
-            cmux claude-teams "$@"
-          else
-            command claude "$@"
-          fi
-        }
       '';
       shellAliases = shared.aliases // {
         # Match fish plugin-git's force-push family; oh-my-zsh ships `gpf!`
