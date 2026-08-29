@@ -29,5 +29,15 @@
     python = "python-wrapper";
     python3 = "python3-wrapper";
     spotless = "./gradlew spotlessApply && git add . && git commit -m 'Apply spotless formatting'";
+
+    # Launch AI coding harnesses with their preferred model. Extra arguments
+    # supplied to an alias are passed through by the shell.
+    ccf = "claude --model fable";
+    cco = "claude --model opus";
+    ccs = "claude --model sonnet";
+    cch = "claude --model haiku";
+    cos = "codex --model sol";
+    cot = "codex --model terra";
+    col = "codex --model luna";
   };
 }
