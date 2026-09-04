@@ -12,7 +12,7 @@ permissions:
 jobs:
   update:
     name: nix flake update
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
 
@@ -22,11 +22,56 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes
 
-      - name: Update flake.lock and open PR
-        uses: DeterminateSystems/update-flake-lock@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Update flake.lock
+        id: update
+        run: |
+          cp flake.lock "$RUNNER_TEMP/flake.lock.before"
+          nix flake update
+          cp flake.lock "$RUNNER_TEMP/flake.lock.after"
+
+          if git diff --quiet -- flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compare mac-2026 system closures
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          cp "$RUNNER_TEMP/flake.lock.before" flake.lock
+          before=$(nix build \
+            '.#darwinConfigurations.mac-2026.config.system.build.toplevel' \
+            --no-link --print-out-paths)
+
+          cp "$RUNNER_TEMP/flake.lock.after" flake.lock
+          after=$(nix build \
+            '.#darwinConfigurations.mac-2026.config.system.build.toplevel' \
+            --no-link --print-out-paths)
+
+          nix store diff-closures "$before" "$after" \
+            > "$RUNNER_TEMP/closure-diff.txt"
+
+          {
+            echo 'Updates the flake inputs used by the mac-2026 Darwin configuration.'
+            echo
+            echo '## System package changes'
+            echo
+            python3 scripts/render-updates.py closure \
+              < "$RUNNER_TEMP/closure-diff.txt"
+          } > "$RUNNER_TEMP/pr-body.md"
+
+      - name: Open PR
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
         with:
-          pr-title: "chore: Update flake inputs"
-          pr-labels: |
+          branch: update_flake_lock_action
+          delete-branch: true
+          add-paths: flake.lock
+          commit-message: "chore: Update flake inputs"
+          title: "chore: Update flake inputs"
+          body-path: ${{ runner.temp }}/pr-body.md
+          labels: |
             dependencies
             automated
-          commit-msg: "chore: Update flake inputs"
