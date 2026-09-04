@@ -16,10 +16,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package:
-          - claude-code-native
-          - codex
-          - kotlin-lsp
+        include:
+          - package: claude-code-native
+            release_repository: anthropics/claude-code
+            tag_prefix: v
+          - package: codex
+            release_repository: openai/codex
+            tag_prefix: rust-v
+          - package: kotlin-lsp
+            release_repository: Kotlin/kotlin-lsp
+            tag_prefix: kotlin-lsp/v
     steps:
       - uses: actions/checkout@v7
 
@@ -38,18 +44,65 @@ jobs:
           [[ "$old" == "$new" ]] && changed=false || changed=true
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
 
+      - name: Collect official release notes
+        if: steps.bump.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEW_VERSION: ${{ steps.bump.outputs.new }}
+          OLD_VERSION: ${{ steps.bump.outputs.old }}
+          PACKAGE: ${{ matrix.package }}
+          RELEASE_REPOSITORY: ${{ matrix.release_repository }}
+          TAG_PREFIX: ${{ matrix.tag_prefix }}
+        run: |
+          releases="$RUNNER_TEMP/releases.json"
+          printf '[]\n' > "$releases"
+          page=1
+
+          while true; do
+            page_releases="$RUNNER_TEMP/releases-page-$page.json"
+            gh api \
+              "repos/$RELEASE_REPOSITORY/releases?per_page=100&page=$page" \
+              > "$page_releases"
+            jq -s '.[0] + .[1]' "$releases" "$page_releases" \
+              > "$RUNNER_TEMP/releases-combined.json"
+            mv "$RUNNER_TEMP/releases-combined.json" "$releases"
+
+            if jq -e --arg tag "$TAG_PREFIX$OLD_VERSION" \
+              'any(.[]; .tag_name == $tag)' "$page_releases" > /dev/null; then
+              break
+            fi
+            if [[ $(jq length "$page_releases") -lt 100 ]]; then
+              break
+            fi
+            page=$((page + 1))
+          done
+
+          {
+            printf "Bumps \`pkgs/%s\` from \`%s\` to \`%s\`.\n" \
+              "$PACKAGE" "$OLD_VERSION" "$NEW_VERSION"
+            echo
+            echo 'Checksums were refreshed for all supported platforms.'
+            echo
+            echo '# Official release notes'
+            echo
+            python3 scripts/render-updates.py releases \
+              --repository "$RELEASE_REPOSITORY" \
+              --tag-prefix "$TAG_PREFIX" \
+              --old-version "$OLD_VERSION" \
+              --new-version "$NEW_VERSION" \
+              < "$releases"
+          } > "$RUNNER_TEMP/pr-body.md"
+
       - name: Open PR
         if: steps.bump.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           branch: bot/${{ matrix.package }}
           delete-branch: true
+          add-paths: pkgs/${{ matrix.package }}
           commit-message: "chore: Update ${{ matrix.package }} to ${{ steps.bump.outputs.new }}"
           title: "chore: Update ${{ matrix.package }} to ${{ steps.bump.outputs.new }}"
-          body: |
-            Bumps `pkgs/${{ matrix.package }}` from `${{ steps.bump.outputs.old }}` to `${{ steps.bump.outputs.new }}`.
-
-            Checksums were refreshed for all supported platforms.
+          body-path: ${{ runner.temp }}/pr-body.md
           labels: |
             dependencies
             automated
