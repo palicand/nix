@@ -1,6 +1,15 @@
-{ pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  ...
+}:
 let
   shared = import ../shared.nix;
+
+  herdr = inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  herdrFishCompletions = pkgs.runCommand "herdr-fish-completions" { } ''
+    ${herdr}/bin/herdr completion fish > "$out"
+  '';
 
   # Fetch Homebrew Fish completions from upstream
   # nix-homebrew doesn't generate these, so we fetch directly from Homebrew's repo
@@ -13,6 +22,9 @@ in
   xdg.configFile = {
     # Add Homebrew Fish completions (nix-homebrew doesn't generate these)
     "fish/completions/brew.fish".source = brewFishCompletions;
+
+    # Herdr exposes completions through its CLI but does not install them.
+    "fish/completions/herdr.fish".source = herdrFishCompletions;
 
     # Auto-source .env files on directory change.
     # Walks up from cwd to find nearest .env, sources it, and tracks set vars
