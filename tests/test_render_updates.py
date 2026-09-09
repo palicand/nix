@@ -193,6 +193,22 @@ _No release notes were published for this version._
 
 
 class ClosureDiffTests(unittest.TestCase):
+    def test_omits_ansi_colored_closure_size_changes(self) -> None:
+        closure_diff = "gh: 2.98.0 → 2.99.0, \x1b[31;1m+133.8 KiB\x1b[0m\n"
+
+        result = run_renderer("closure", input_text=closure_diff)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            result.stdout,
+            """### Updated packages
+
+| Package | Before | After |
+| --- | --- | --- |
+| `gh` | `2.98.0` | `2.99.0` |
+""",
+        )
+
     def test_groups_versioned_package_changes_and_omits_versionless_noise(self) -> None:
         closure_diff = """generated-config: +512.0 KiB
 git: 2.50.1 → 2.51.0, +1.0 KiB

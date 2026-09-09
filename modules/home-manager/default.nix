@@ -288,9 +288,6 @@
       (pkgs.callPackage ../../pkgs/kotlin-lsp/default.nix { })
       cloc
       auth0-cli
-      nixfmt
-      nixfmt-tree # Official Nix formatter using treefmt
-      nixd
       ncdu
       grpcurl
       ghidra
