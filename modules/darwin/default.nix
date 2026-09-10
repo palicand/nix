@@ -74,10 +74,6 @@
   environment = {
     pathsToLink = [ "/lib" ];
 
-    systemPackages = with pkgs; [
-      nixpkgs-fmt
-    ];
-
     # Make Nix-managed binaries visible to GUI apps via macOS path_helper
     etc."paths.d/nix".text = ''
       /etc/profiles/per-user/${config.user.name}/bin
