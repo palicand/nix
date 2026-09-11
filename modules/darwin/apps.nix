@@ -79,6 +79,7 @@
 
       # AI
       "claude"
+      "chatgpt"
 
       # Browsers & Desktop apps
       "google-chrome"
