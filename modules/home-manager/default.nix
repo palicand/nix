@@ -300,7 +300,6 @@
       (graphite-cli.overrideAttrs { postInstall = ""; }) # Stacked PRs on top of GitHub
       cf-terraforming
       flarectl # Official Cloudflare CLI
-      rtk
       (pkgs.callPackage ../../pkgs/codex/default.nix { })
       inputs.herdr.packages.${pkgs.stdenv.hostPlatform.system}.default # Terminal multiplexer for AI coding agents
       jackett
