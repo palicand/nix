@@ -47,7 +47,9 @@
 
       # Security & Privacy
       "mullvad-vpn"
+      "nordlayer"
       "keepassxc"
+      "1password"
 
       # Communication
       "signal"
