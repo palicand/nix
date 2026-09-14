@@ -1,16 +1,7 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
+{ lib, ... }:
 
 {
   home = {
-    packages = with pkgs; [
-      statix
-    ];
-
     # Simple git pre-commit hook for ~/.nixpkgs (no pre-commit framework needed)
     activation.installPreCommitHooks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
             HOOKS_DIR="$HOME/.nixpkgs/.git/hooks"

@@ -145,6 +145,9 @@
           packages = with pkgs; [
             sops
             ssh-to-age
+            nixfmt
+            statix
+            deadnix
             nil
             (writeShellScriptBin "rotate" ''
               set -euo pipefail

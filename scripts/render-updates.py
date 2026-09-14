@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import quote
 
 MARKDOWN_HEADING_PATTERN = re.compile(r"^(#{1,6})(\s+.*)$")
+ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 CLOSURE_SIZE_PATTERN = re.compile(r", [+-][0-9]+(?:\.[0-9]+)? [A-Za-z]+$")
 MENTION_PATTERN = re.compile(r"(?<![A-Za-z0-9_])@(?=[A-Za-z0-9])")
 
@@ -125,6 +126,7 @@ def render_closure(payload: str) -> str:
     added: list[list[str]] = []
     removed: list[list[str]] = []
 
+    payload = ANSI_ESCAPE_PATTERN.sub("", payload)
     for line in sorted(payload.splitlines()):
         package, separator, change = line.partition(": ")
         if not separator or " → " not in change:
