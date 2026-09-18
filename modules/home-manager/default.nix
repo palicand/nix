@@ -149,6 +149,14 @@
       vi = True
       auto_expand = True
     '';
+
+    # direnv sources ~/.config/direnv/lib/*.sh before every .envrc, so a project
+    # gets its own Claude Code state dir with a single `use_claude_profile` line.
+    "direnv/lib/claude-profile.sh".text = ''
+      use_claude_profile() {
+        export CLAUDE_CONFIG_DIR="$HOME/.claude-''${1:-$(basename "$PWD")}"
+      }
+    '';
   };
 
   home = with pkgs; {
