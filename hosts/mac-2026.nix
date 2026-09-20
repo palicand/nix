@@ -4,6 +4,8 @@
   nix.package = pkgs.lix;
   ids.gids.nixbld = 350;
 
+  networking.vpnTunnelMtu.enable = true;
+
   services.llama-cpp = {
     enable = true;
     models = [

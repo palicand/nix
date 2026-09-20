@@ -25,6 +25,7 @@
     ./llama-cpp.nix
     ./charging-chime.nix
     ./filevault.nix
+    ./vpn-tunnel-mtu.nix
   ];
   # Auto upgrade nix package and the daemon service.
   # Create /etc/bashrc that loads the nix-darwin environment.
