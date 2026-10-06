@@ -5,6 +5,9 @@
   ...
 }:
 {
+  # nix-homebrew's launcher omits this variable required by Homebrew's startup.
+  nix-homebrew.extraEnv.HOMEBREW_ORIGINAL_BREW_FILE = "${config.homebrew.prefix}/bin/brew";
+
   homebrew = {
 
     enable = true;
