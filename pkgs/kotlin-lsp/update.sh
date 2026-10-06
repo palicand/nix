@@ -33,9 +33,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_NIX="$SCRIPT_DIR/default.nix"
 BASE_URL=""
 for candidate in \
-  "https://download-cdn.jetbrains.com/language-server/kotlin-server/${VERSION}" \
-  "https://download-cdn.jetbrains.com/kotlin-lsp/${VERSION}"; do
-  if curl -sf "${candidate}/kotlin-server-${VERSION}.tar.gz.sha256" >/dev/null; then
+  "https://download.jetbrains.com/language-server/kotlin-server/${VERSION}" \
+  "https://download.jetbrains.com/kotlin-lsp/${VERSION}"; do
+  if curl -fsSL "${candidate}/kotlin-server-${VERSION}.tar.gz.sha256" >/dev/null; then
     BASE_URL="$candidate"
     break
   fi
@@ -65,7 +65,7 @@ for nix_platform in "${!PLATFORMS[@]}"; do
   suffix="${PLATFORMS[$nix_platform]}"
   url="${BASE_URL}/kotlin-server-${VERSION}${suffix}.sha256"
 
-  checksum=$(curl -sf "$url" | awk '{print $1}') || {
+  checksum=$(curl -fsSL "$url" | awk '{print $1}') || {
     echo "Error: Failed to fetch checksum for $nix_platform"
     echo "URL: $url"
     exit 1

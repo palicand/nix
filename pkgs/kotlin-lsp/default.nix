@@ -8,7 +8,8 @@
 let
   version = "263.6379.0";
 
-  baseUrl = "https://download-cdn.jetbrains.com/language-server/kotlin-server/${version}";
+  # The public endpoint supplies signed CDN redirects required for archives.
+  baseUrl = "https://download.jetbrains.com/language-server/kotlin-server/${version}";
 
   sources = {
     aarch64-darwin = {
