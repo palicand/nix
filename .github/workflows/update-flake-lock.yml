@@ -26,12 +26,16 @@ jobs:
 
       - name: Update flake.lock
         id: update
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           cp flake.lock "$RUNNER_TEMP/flake.lock.before"
+          herdr_tag=$(gh api repos/herdrdev/herdr/releases/latest --jq .tag_name)
+          sed -i '' -E "s|github:herdrdev/herdr/v[^\"]+|github:herdrdev/herdr/$herdr_tag|" flake.nix
           nix flake update
           cp flake.lock "$RUNNER_TEMP/flake.lock.after"
 
-          if git diff --quiet -- flake.lock; then
+          if git diff --quiet -- flake.nix flake.lock; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -68,7 +72,9 @@ jobs:
         with:
           branch: update_flake_lock_action
           delete-branch: true
-          add-paths: flake.lock
+          add-paths: |
+            flake.nix
+            flake.lock
           commit-message: "chore: Update flake inputs"
           title: "chore: Update flake inputs"
           body-path: ${{ runner.temp }}/pr-body.md
