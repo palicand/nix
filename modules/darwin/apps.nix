@@ -21,7 +21,7 @@
       brewfile = true;
     };
     brews = [
-      "gnupg2"
+      "gnupg"
       "pinentry-mac"
       "cloud-sql-proxy"
     ];
@@ -57,6 +57,7 @@
       # Communication
       "signal"
       "slack"
+      "microsoft-teams"
       "telegram"
       "whatsapp"
       "notion"
