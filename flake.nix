@@ -105,6 +105,17 @@
           touch "$out"
         '';
 
+      mkGitCleanupCheck =
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          gitCleanup = pkgs.callPackage ./modules/home-manager/git/git-cleanup.nix { };
+        in
+        pkgs.runCommand "git-cleanup-test" { nativeBuildInputs = [ pkgs.git ]; } ''
+          ${pkgs.bash}/bin/bash ${./tests/git-cleanup.sh} ${gitCleanup}/bin/git-cleanup
+          touch "$out"
+        '';
+
       mkLlamaCppModuleCheck =
         system:
         let
@@ -122,6 +133,7 @@
             darwin = self.darwinConfigurations.uber-mac.config.system.build.toplevel;
             llama-cpp-module = mkLlamaCppModuleCheck system;
             llama-cpp-model-sync = mkLlamaCppModelSyncCheck system;
+            git-cleanup = mkGitCleanupCheck system;
           }
           // nixpkgs.lib.optionalAttrs (system == "aarch64-darwin") {
             mac-2026 = self.darwinConfigurations.mac-2026.config.system.build.toplevel;
