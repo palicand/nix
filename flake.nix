@@ -43,7 +43,7 @@
     # herdr — terminal multiplexer for AI coding agents. Not in nixpkgs; ships
     # its own flake. Pin to a release tag per upstream's install guidance.
     herdr = {
-      url = "github:herdrdev/herdr/v0.9.3";
+      url = "github:herdrdev/herdr/v0.9.5";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
