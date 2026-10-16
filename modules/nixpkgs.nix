@@ -5,6 +5,7 @@
   };
   nix = {
     # nix.package set per-host in hosts/*.nix
+    channel.enable = false;
     settings = {
       max-jobs = "auto";
     };
