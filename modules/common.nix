@@ -13,7 +13,7 @@
 
   user = {
     description = "Andrej Palicka";
-    home = "${if pkgs.stdenvNoCC.isDarwin then "/Users" else "/home"}/${config.user.name}";
+    home = "${if pkgs.stdenv.hostPlatform.isDarwin then "/Users" else "/home"}/${config.user.name}";
     shell = pkgs.fish;
   };
 
