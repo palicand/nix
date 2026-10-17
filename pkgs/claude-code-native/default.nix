@@ -6,26 +6,26 @@
 }:
 
 let
-  version = "2.1.301";
+  version = "2.1.302";
 
   baseUrl = "https://downloads.claude.ai/claude-code-releases";
 
   sources = {
     aarch64-darwin = {
       url = "${baseUrl}/${version}/darwin-arm64/claude";
-      sha256 = "1f04c69e1c24e4d0a716a863af0aad8fc64d49a499334c29701f073700276b99";
+      sha256 = "5262ce9de86243fed0d21edc39b271555d56780d0112e2b194439fe1c6662d37";
     };
     x86_64-darwin = {
       url = "${baseUrl}/${version}/darwin-x64/claude";
-      sha256 = "3439427bfce962fddcf557c5a058ca914fa63e06fee894f8e12a3f10e04d1871";
+      sha256 = "b9a913114f42870ec8e38848c88c855d73f73187871ec2e1ad05bbe54029d9ac";
     };
     aarch64-linux = {
       url = "${baseUrl}/${version}/linux-arm64/claude";
-      sha256 = "1e119036a802d359ba5f9886428e031586e8796f7a858d5a8ee179ac7b8604f0";
+      sha256 = "2bd4f4e5ed5cb09955b490098f745321cb5491e7ea8c752ba1e3bb010cdadb10";
     };
     x86_64-linux = {
       url = "${baseUrl}/${version}/linux-x64/claude";
-      sha256 = "bc1aad9982c7b59c7d889ff92595d61cf46e0a6eae074cb551d932a989bcd222";
+      sha256 = "60d7eb7f12fbb28a52533fe8be5884097403562aa02dc73991a021c7067e29a5";
     };
   };
 
