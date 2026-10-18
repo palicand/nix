@@ -6,7 +6,7 @@
 }:
 
 let
-  version = "263.6379.0";
+  version = "263.7084.0";
 
   # The public endpoint supplies signed CDN redirects required for archives.
   baseUrl = "https://download.jetbrains.com/language-server/kotlin-server/${version}";
@@ -14,19 +14,19 @@ let
   sources = {
     aarch64-darwin = {
       url = "${baseUrl}/kotlin-server-${version}-aarch64.sit";
-      sha256 = "ebef2e13cd4adc4ec9e04084b848000a3ec7a9d2917c64f269574ce2efe9ecad";
+      sha256 = "b403bf8a54bd458e3ba6731cf8abb3340be08b439c03576dfc02b13faf3694b8";
     };
     x86_64-darwin = {
       url = "${baseUrl}/kotlin-server-${version}.sit";
-      sha256 = "e69e0c9d27b915b2db9ee692ec08d097df1a394d9f21190457ef199f2905f77e";
+      sha256 = "b29c393a5e541153d03d626e7946268437e358a667a5f914a126dbb4007664b1";
     };
     aarch64-linux = {
       url = "${baseUrl}/kotlin-server-${version}-aarch64.tar.gz";
-      sha256 = "50999901ef8bcfa1e58561b6a8d782a72dea5620fcf92a64130807f8924a56fc";
+      sha256 = "450ab7c1d80e48106aa429b48cb4226d82ca12a8a2400447ae02386794780cac";
     };
     x86_64-linux = {
       url = "${baseUrl}/kotlin-server-${version}.tar.gz";
-      sha256 = "ab8ca4455dc2fc5fe1a24db2bccc46c104254d2c465155c4251ee65df8f3f7cc";
+      sha256 = "ae0c4b01e17ab73a4a5227a78ea99e6dcbe3e499600315b22759a4e4cddd11df";
     };
   };
 
