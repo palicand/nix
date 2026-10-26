@@ -57,7 +57,8 @@ stdenv.mkDerivation {
 
   postInstall = ''
     wrapProgram $out/bin/claude \
-      --set DISABLE_AUTOUPDATER 1
+      --set DISABLE_AUTOUPDATER 1 \
+      --set FORCE_AUTOUPDATE_PLUGINS 1
   '';
 
   meta = {
