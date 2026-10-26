@@ -10,6 +10,16 @@
   # Workaround: direnv 2.37.1 in nixpkgs uses -linkmode=external but sets CGO_ENABLED=0
   nixpkgs.overlays = [
     (final: prev: {
+      pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+        (python-final: python-prev: {
+          deepdiff = python-prev.deepdiff.overridePythonAttrs (old: {
+            disabledTests = (old.disabledTests or [ ]) ++ [
+              "test_multi_processing1"
+              "test_multi_processing3_deephash"
+            ];
+          });
+        })
+      ];
       direnv = prev.direnv.overrideAttrs (old: {
         env = (old.env or { }) // {
           CGO_ENABLED = 1;
