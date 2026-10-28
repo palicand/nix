@@ -20,9 +20,7 @@
       inputs.brew-src.follows = "brew-src";
     };
 
-    # Pin Homebrew core to a known-good version. Override nix-homebrew's
-    # transitive brew-src input so the parser stays compatible with the
-    # structured cask artifacts served by Homebrew's API.
+    # Override nix-homebrew's lagging release; update-all advances this stable pin.
     brew-src = {
       url = "github:Homebrew/brew/7.0.11";
       flake = false;
