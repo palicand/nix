@@ -8,20 +8,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_NIX="$SCRIPT_DIR/default.nix"
 VERSION="${1:-}"
 
+command -v gh >/dev/null || {
+  echo "Error: 'gh' CLI not available. Install it to fetch release metadata." >&2
+  exit 1
+}
+
 if [[ -z "$VERSION" ]]; then
-  command -v gh >/dev/null || {
-    echo "Error: 'gh' CLI not available. Install it or pass a version explicitly."
-    exit 1
-  }
-  TAG=$(gh release view --repo openai/codex --json tagName -q .tagName)
-  VERSION="${TAG#rust-v}"
+  RELEASE=$(gh api repos/openai/codex/releases/latest)
 else
   VERSION="${VERSION#rust-v}"
   VERSION="${VERSION#v}"
-  TAG="rust-v$VERSION"
+  RELEASE=$(gh api "repos/openai/codex/releases/tags/rust-v$VERSION")
 fi
 
-BASE_URL="https://github.com/openai/codex/releases/download/$TAG"
+TAG=$(jq -er '.tag_name' <<< "$RELEASE")
+if [[ ! "$TAG" =~ ^rust-v[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+  echo "Error: unexpected Codex release tag: $TAG" >&2
+  exit 1
+fi
+VERSION="${TAG#rust-v}"
+
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -33,11 +39,18 @@ declare -A ASSETS=(
 )
 declare -A CHECKSUMS
 
-echo "Fetching Codex $VERSION..."
+echo "Reading published checksums for Codex $VERSION..."
 for platform in "${!ASSETS[@]}"; do
   asset="${ASSETS[$platform]}"
-  curl -fL "$BASE_URL/$asset" -o "$TMP_DIR/$asset"
-  CHECKSUMS[$platform]=$(shasum -a 256 "$TMP_DIR/$asset" | awk '{print $1}')
+  digest=$(jq -er --arg name "$asset" '.assets[] | select(.name == $name) | .digest' <<< "$RELEASE") || {
+    echo "Error: missing SHA-256 digest for $asset" >&2
+    exit 1
+  }
+  if [[ ! "$digest" =~ ^sha256:[[:xdigit:]]{64}$ ]]; then
+    echo "Error: invalid SHA-256 digest for $asset" >&2
+    exit 1
+  fi
+  CHECKSUMS[$platform]="${digest#sha256:}"
   echo "  $platform: ${CHECKSUMS[$platform]}"
 done
 
