@@ -24,7 +24,7 @@
     # transitive brew-src input so the parser stays compatible with the
     # structured cask artifacts served by Homebrew's API.
     brew-src = {
-      url = "github:Homebrew/brew/6.0.13";
+      url = "github:Homebrew/brew/7.0.11";
       flake = false;
     };
 
