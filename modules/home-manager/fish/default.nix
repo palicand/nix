@@ -10,6 +10,9 @@ let
   herdrFishCompletions = pkgs.runCommand "herdr-fish-completions" { } ''
     ${herdr}/bin/herdr completion fish > "$out"
   '';
+  wranglerFishCompletions = pkgs.runCommand "wrangler-fish-completions" { } ''
+    WRANGLER_LOG_PATH="$TMPDIR/wrangler.log" ${pkgs.wrangler}/bin/wrangler complete fish > "$out"
+  '';
 
   # Fetch Homebrew Fish completions from upstream
   # nix-homebrew doesn't generate these, so we fetch directly from Homebrew's repo
@@ -25,6 +28,7 @@ in
 
     # Herdr exposes completions through its CLI but does not install them.
     "fish/completions/herdr.fish".source = herdrFishCompletions;
+    "fish/completions/wrangler.fish".source = wranglerFishCompletions;
 
     # Auto-source .env files on directory change.
     # Walks up from cwd to find nearest .env, sources it, and tracks set vars
