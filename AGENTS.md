@@ -53,6 +53,22 @@ work.
 The development shell provides repository-only tools such as `sops`,
 `ssh-to-age`, and `nil`; direnv normally loads it automatically.
 
+For non-interactive agent commands, do not assume direnv has loaded the shell.
+The inherited `PATH` can contain deleted Nix store paths. Run formatting,
+checks, and commits through the declared development shell so all hook tools
+(`nixfmt` and `statix`) are available together:
+
+```bash
+nix develop --command nixfmt --check <file.nix>
+nix develop --command statix check .
+nix develop --command git commit ...
+```
+
+Run `nix develop` unsandboxed on the first attempt because it needs the Nix
+daemon. Do not retry commits by adding missing tools one at a time.
+The `nixfmt-tree` package exposes `treefmt`, not a `nixfmt-tree` executable;
+invoke it with `nix run nixpkgs#nixfmt-tree` when needed.
+
 `update-all` runs `scripts/update-all.py`: it runs every `pkgs/**/update.sh`,
 updates every `pkgs/**/flake.nix` and the root flake, then rebuilds. New local
 packages need an `update.sh` that works without arguments. Numeric GitHub release
