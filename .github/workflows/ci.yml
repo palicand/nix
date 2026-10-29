@@ -16,8 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Update renderer tests
-        run: python3 tests/test_render_updates.py
+      - name: Script tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main

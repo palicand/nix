@@ -53,6 +53,14 @@ work.
 The development shell provides repository-only tools such as `sops`,
 `ssh-to-age`, and `nil`; direnv normally loads it automatically.
 
+`update-all` runs `scripts/update-all.py`: it runs every `pkgs/**/update.sh`,
+updates every `pkgs/**/flake.nix` and the root flake, then rebuilds. New local
+packages need an `update.sh` that works without arguments. Numeric GitHub release
+pins (`1.2.3` or `v1.2.3`) advance to the latest stable release; branches and commit
+pins retain their declared refs. A failed update stops before activation and
+leaves completed source updates available for review. Homebrew upgrades declared
+formulae and all casks during activation, including apps with their own updater.
+
 ## Common changes
 
 ### Packages and applications
