@@ -7,14 +7,15 @@
 {
   # nix-homebrew's launcher omits this variable required by Homebrew's startup.
   nix-homebrew.extraEnv.HOMEBREW_ORIGINAL_BREW_FILE = "${config.homebrew.prefix}/bin/brew";
+  nix-homebrew.extraEnv.HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS = "1";
 
   homebrew = {
 
     enable = true;
-    greedyCasks = true;
+    greedyCasks = false;
     onActivation = {
       autoUpdate = true;
-      upgrade = true;
+      upgrade = false;
       # Homebrew 6.0 dropped `brew bundle --force-cleanup`, which nix-darwin still emits for "zap"/"uninstall" (aborting activation). Keep "none" until nix-darwin supports the 6.0 bundle CLI; prune manually with `brew bundle cleanup --file=<Brewfile>`.
       cleanup = "none";
     };

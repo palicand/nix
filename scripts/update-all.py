@@ -51,7 +51,7 @@ def main():
     for flake in [*sorted(packages.rglob("flake.nix")), root / "flake.nix"]:
         update_release_pins(flake)
         run("nix", "flake", "update", "--flake", str(flake.parent), cwd=flake.parent)
-    run("sudo", "darwin-rebuild", "switch", "--flake", str(root), cwd=root)
+    run(sys.executable, str(root / "scripts" / "rebuild.py"), "--upgrade-brew", cwd=root)
 
 
 if __name__ == "__main__":

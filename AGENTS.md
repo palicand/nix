@@ -74,8 +74,12 @@ updates every `pkgs/**/flake.nix` and the root flake, then rebuilds. New local
 packages need an `update.sh` that works without arguments. Numeric GitHub release
 pins (`1.2.3` or `v1.2.3`) advance to the latest stable release; branches and commit
 pins retain their declared refs. A failed update stops before activation and
-leaves completed source updates available for review. Homebrew upgrades declared
-formulae and all casks during activation, including apps with their own updater.
+leaves completed source updates available for review. `rebuild` installs missing
+Homebrew packages and allows metadata updates without routine package upgrades.
+`rebuild --upgrade-brew` and `update-all` run `brew upgrade` after a successful
+rebuild, upgrading installed formulae and versioned casks without their own updater.
+Homebrew uses each cask's `auto_updates` metadata to skip self-updating apps.
+The Homebrew executable is pinned by `brew-src`; `update-all` advances that pin.
 
 ## Common changes
 

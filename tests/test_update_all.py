@@ -18,6 +18,9 @@ class UpdateAllTests(unittest.TestCase):
         (self.root / "scripts").mkdir(parents=True)
         self.script = self.root / "scripts" / "update-all.py"
         shutil.copyfile(REPOSITORY_ROOT / "scripts" / "update-all.py", self.script)
+        shutil.copyfile(
+            REPOSITORY_ROOT / "scripts" / "rebuild.py", self.root / "scripts" / "rebuild.py",
+        )
         self.flake = self.root / "flake.nix"
         self.flake.write_text('''{
   inputs.brew-src.url = "github:Homebrew/brew/7.0.11";
@@ -48,7 +51,7 @@ if name == "gh":
     }}[sys.argv[sys.argv.index("--repo") + 1]]))
 ''')
         stub.chmod(0o755)
-        for command in ("nix", "gh", "sudo"):
+        for command in ("nix", "gh", "sudo", "brew"):
             (self.bin / command).symlink_to(stub)
 
     def package(self, name, *, flake=True, updater=True, fails=False):
@@ -64,9 +67,9 @@ if name == "gh":
                 f"exit {1 if fails else 0}\n"
             )
 
-    def run_update(self, **environment):
+    def run_script(self, *arguments, script="update-all.py", **environment):
         result = subprocess.run(
-            [sys.executable, str(self.script)],
+            [sys.executable, str(self.root / "scripts" / script), *arguments],
             cwd=self.temporary.name,
             env={
                 **os.environ,
@@ -91,7 +94,7 @@ if name == "gh":
         future = self.root / "pkgs/future/package with spaces/flake.nix"
         future.write_text('{ inputs.new.url = "github:example/future/v1.0.0"; }\n')
 
-        result, calls = self.run_update()
+        result, calls = self.run_script()
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual([call for call in calls if call[0] == "package"], [
@@ -110,23 +113,26 @@ if name == "gh":
         self.assertIn("github:NixOS/nixpkgs/nixpkgs-unstable", self.flake.read_text())
         self.assertIn("github:example/fixed/0123456789abcdef", self.flake.read_text())
         self.assertIn("github:example/future/v2.0.0", future.read_text())
-        self.assertEqual(calls[-1], ["sudo", "darwin-rebuild", "switch", "--flake", str(self.root)])
+        self.assertEqual(calls[-2:], [
+            ["sudo", "darwin-rebuild", "switch", "--flake", str(self.root)],
+            ["brew", "upgrade"],
+        ])
 
     def test_package_failure_prevents_rebuild(self):
         self.package("broken", fails=True)
-        result, calls = self.run_update()
+        result, calls = self.run_script()
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(calls, [["package", "broken"]])
 
     def test_flake_failure_prevents_rebuild(self):
-        result, calls = self.run_update(FAIL_COMMAND="nix")
+        result, calls = self.run_script(FAIL_COMMAND="nix")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(calls[-1][0], "nix")
         self.assertFalse(any(call[0] == "sudo" for call in calls))
 
     def test_release_lookup_failure_leaves_pins_unchanged(self):
         before = self.flake.read_text()
-        result, calls = self.run_update(FAIL_COMMAND="gh")
+        result, calls = self.run_script(FAIL_COMMAND="gh")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.flake.read_text(), before)
         self.assertEqual(calls[0][0], "gh")
@@ -134,7 +140,7 @@ if name == "gh":
 
     def test_invalid_release_tag_cannot_inject_nix(self):
         before = self.flake.read_text()
-        result, calls = self.run_update(LATEST_TAG='7.0.12"; malicious = "yes')
+        result, calls = self.run_script(LATEST_TAG='7.0.12"; malicious = "yes')
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.flake.read_text(), before)
         self.assertEqual(calls[0][0], "gh")
@@ -143,7 +149,7 @@ if name == "gh":
     def test_older_stable_release_does_not_downgrade_a_pin(self):
         self.flake.write_text('{ inputs.brew-src.url = "github:Homebrew/brew/7.0.11"; }\n')
         before = self.flake.read_text()
-        result, _ = self.run_update(LATEST_TAG="7.0.10")
+        result, _ = self.run_script(LATEST_TAG="7.0.10")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.flake.read_text(), before)
 
@@ -153,10 +159,42 @@ if name == "gh":
   description = "github:Homebrew/brew/7.0.11";
 }
 ''')
-        result, _ = self.run_update()
+        result, _ = self.run_script()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('url = "github:Homebrew/brew/7.0.12"', self.flake.read_text())
         self.assertIn('description = "github:Homebrew/brew/7.0.11"', self.flake.read_text())
+
+    def test_rebuild_does_not_upgrade_brew_by_default(self):
+        result, calls = self.run_script(script="rebuild.py")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls, [
+            ["sudo", "darwin-rebuild", "switch", "--flake", str(self.root)],
+        ])
+
+    def test_rebuild_upgrade_flag_preserves_darwin_arguments(self):
+        result, calls = self.run_script(
+            "--show-trace", "--upgrade-brew", "--verbose", script="rebuild.py",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(calls, [
+            ["sudo", "darwin-rebuild", "switch", "--flake", str(self.root),
+             "--show-trace", "--verbose"],
+            ["brew", "upgrade"],
+        ])
+
+    def test_rebuild_failure_prevents_brew_upgrade(self):
+        result, calls = self.run_script(
+            "--upgrade-brew", script="rebuild.py", FAIL_COMMAND="sudo",
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], "sudo")
+
+    def test_update_all_reports_brew_upgrade_failure(self):
+        result, calls = self.run_script(FAIL_COMMAND="brew")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(calls[-1], ["brew", "upgrade"])
+        self.assertIn("rebuild:", result.stderr)
 
 
 if __name__ == "__main__":
