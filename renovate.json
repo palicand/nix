@@ -1,9 +1,219 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "enabled": false,
   "extends": [
     "config:recommended"
   ],
+  "timezone": "Europe/Prague",
+  "labels": [
+    "dependencies",
+    "automated"
+  ],
+  "enabledManagers": [
+    "nix",
+    "github-actions",
+    "custom.regex"
+  ],
   "nix": {
     "enabled": true
-  }
+  },
+  "automerge": false,
+  "rebaseWhen": "behind-base-branch",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 9am on monday"
+    ]
+  },
+  "customDatasources": {
+    "claude-channel": {
+      "defaultRegistryUrlTemplate": "https://downloads.claude.ai/claude-code-releases/latest",
+      "format": "plain",
+      "transformTemplates": [
+        "{\"releases\": releases, \"sourceUrl\": \"https://github.com/anthropics/claude-code\"}"
+      ]
+    }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^pkgs/codex/default\\.nix$/"
+      ],
+      "matchStrings": [
+        "  version = \"(?<currentValue>[^\"\\s]+)\";"
+      ],
+      "depNameTemplate": "openai/codex",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^rust-v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^pkgs/kotlin-lsp/default\\.nix$/"
+      ],
+      "matchStrings": [
+        "  version = \"(?<currentValue>[^\"\\s]+)\";"
+      ],
+      "depNameTemplate": "Kotlin/kotlin-lsp",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^kotlin-lsp/v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^pkgs/claude-code-native/default\\.nix$/"
+      ],
+      "matchStrings": [
+        "  version = \"(?<currentValue>[^\"\\s]+)\";"
+      ],
+      "depNameTemplate": "anthropics/claude-code",
+      "datasourceTemplate": "custom.claude-channel",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^flake\\.nix$/"
+      ],
+      "matchStrings": [
+        "github:herdrdev/herdr/(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate": "herdrdev/herdr",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^flake\\.nix$/"
+      ],
+      "matchStrings": [
+        "github:Homebrew/brew/(?<currentValue>v?\\d+\\.\\d+\\.\\d+)\""
+      ],
+      "depNameTemplate": "Homebrew/brew",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/renovate\\.yml$/"
+      ],
+      "matchStrings": [
+        "renovate-version: (?<currentValue>\\d+\\.\\d+\\.\\d+)-full"
+      ],
+      "depNameTemplate": "renovatebot/renovate",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": [
+        "nix"
+      ],
+      "matchDepNames": [
+        "herdr",
+        "brew-src"
+      ],
+      "enabled": false
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "openai/codex"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "bash pkgs/codex/update.sh {{newValue}}"
+        ],
+        "fileFilters": [
+          "pkgs/codex/default.nix"
+        ],
+        "executionMode": "update",
+        "installTools": {
+          "gh": {}
+        }
+      }
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "Kotlin/kotlin-lsp"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "bash pkgs/kotlin-lsp/update.sh {{newValue}}"
+        ],
+        "fileFilters": [
+          "pkgs/kotlin-lsp/default.nix"
+        ],
+        "executionMode": "update"
+      }
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "anthropics/claude-code"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "bash pkgs/claude-code-native/update.sh {{newValue}}"
+        ],
+        "fileFilters": [
+          "pkgs/claude-code-native/default.nix"
+        ],
+        "executionMode": "update"
+      }
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "herdrdev/herdr"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "nix flake update herdr"
+        ],
+        "fileFilters": [
+          "flake.lock"
+        ],
+        "executionMode": "update",
+        "installTools": {
+          "nix": {}
+        }
+      }
+    },
+    {
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "Homebrew/brew"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "nix flake update brew-src"
+        ],
+        "fileFilters": [
+          "flake.lock"
+        ],
+        "executionMode": "update",
+        "installTools": {
+          "nix": {}
+        }
+      }
+    }
+  ]
 }

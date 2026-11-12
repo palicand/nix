@@ -1,0 +1,63 @@
+name: Renovate
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Preview updates without writing to GitHub
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check credentials
+        env:
+          RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+        run: |
+          if [ -z "$RENOVATE_TOKEN" ]; then
+            echo '::error::Add the RENOVATE_TOKEN repository secret. See docs/renovate.md.'
+            exit 1
+          fi
+
+      - uses: actions/cache/restore@v6
+        with:
+          path: /tmp/renovate/cache
+          key: renovate-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: renovate-v1-${{ runner.os }}-
+
+      - name: Prepare cache permissions
+        run: |
+          sudo mkdir -p /tmp/renovate/cache
+          sudo chown -R 12021:0 /tmp/renovate
+
+      - uses: renovatebot/github-action@v46.3.13
+        with:
+          configurationFile: .github/renovate-config.cjs
+          token: ${{ secrets.RENOVATE_TOKEN }}
+          renovate-version: 44.235.1-full
+          additional-env-list: GITHUB_REPOSITORY
+        env:
+          RENOVATE_DRY_RUN: ${{ inputs.dry-run && 'full' || '' }}
+          LOG_LEVEL: debug
+
+      - uses: actions/cache/save@v6
+        if: success()
+        with:
+          path: /tmp/renovate/cache
+          key: renovate-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}

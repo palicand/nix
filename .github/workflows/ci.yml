@@ -63,3 +63,53 @@ jobs:
 
       - name: Build system closure
         run: nix build .#checks.aarch64-darwin.darwin --print-build-logs
+
+  package-changes:
+    name: System package changes (mac-2026)
+    if: github.event_name == 'pull_request'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check flake changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if ! git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- flake.nix flake.lock; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Nix
+        if: steps.changes.outputs.changed == 'true'
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+        if: steps.changes.outputs.changed == 'true'
+
+      - name: Compare system closures
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
+          before=$(nix build \
+            "$RUNNER_TEMP/base#darwinConfigurations.mac-2026.config.system.build.toplevel" \
+            --no-link --print-out-paths)
+          git checkout --detach "$HEAD_SHA"
+          after=$(nix build \
+            '.#darwinConfigurations.mac-2026.config.system.build.toplevel' \
+            --no-link --print-out-paths)
+          nix store diff-closures "$before" "$after" > "$RUNNER_TEMP/closure-diff.txt"
+          {
+            echo '## System package changes'
+            echo
+            python3 scripts/render-updates.py closure < "$RUNNER_TEMP/closure-diff.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
