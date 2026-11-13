@@ -66,8 +66,8 @@ awk \
   /aarch64-linux =/  { platform = "aarch64_linux" }
   /x86_64-linux =/   { platform = "x86_64_linux" }
   /sha256 = / && platform != "" {
-    checksum = platform == "aarch64_darwin" ? aarch64_darwin :
-      platform == "x86_64_darwin" ? x86_64_darwin :
+    checksum = platform == "aarch64_darwin" ? aarch64_darwin : \
+      platform == "x86_64_darwin" ? x86_64_darwin : \
       platform == "aarch64_linux" ? aarch64_linux : x86_64_linux
     sub(/sha256 = "[^"]*"/, "sha256 = \"" checksum "\"")
     platform = ""
