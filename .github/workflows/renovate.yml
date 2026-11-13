@@ -55,6 +55,7 @@ jobs:
           renovate-version: 44.239.0-full
           additional-env-list: GITHUB_REPOSITORY
         env:
+          RENOVATE_BINARY_SOURCE: install
           RENOVATE_DRY_RUN: ${{ inputs.dry-run && 'full' || '' }}
           LOG_LEVEL: debug
 
