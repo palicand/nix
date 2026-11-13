@@ -5,7 +5,7 @@
 }:
 
 let
-  version = "0.167.0";
+  version = "0.169.0";
   tag = "rust-v${version}";
   baseUrl = "https://github.com/openai/codex/releases/download/${tag}";
 
