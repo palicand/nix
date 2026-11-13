@@ -5,6 +5,7 @@ module.exports = {
   requireConfig: 'required',
   branchPrefix: 'renovate-self-hosted/',
   repositoryCache: 'enabled',
+  binarySource: 'install',
   force: { enabled: true },
   allowedCommands: [
     '^bash pkgs/(codex|kotlin-lsp|claude-code-native)/update\\.sh v?[0-9]+\\.[0-9]+\\.[0-9]+$',

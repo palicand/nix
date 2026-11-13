@@ -1,6 +1,7 @@
 # Renovate
 
-[Renovate runs in GitHub Actions][action] every hour at minute 17. It maintains
+[Renovate runs in GitHub Actions][action] after every push to `main` (including
+merges) and every hour at minute 17. It maintains
 update PRs and a Dependency Dashboard issue using `config:recommended`.
 Branches are rebased when behind the base branch; automerge is disabled.
 Dashboard retry/rebase requests are picked up on the next run. Use workflow
@@ -40,7 +41,11 @@ bot for this repository. The Actions runner overrides it through its global
   named flake updates.
 - GitHub Actions and the Renovate image version are also maintained by Renovate.
 
-The runner uses the full Renovate image for Nix and supporting tools. It saves
+The runner uses the full Renovate image for Nix and supporting tools, with
+[`binarySource: 'install'`][binary-source] so post-upgrade tasks can install
+declared tools such as `gh`. The full image defaults to `global`, which
+[ignores `installTools`][install-tools] and leaves Codex checksum updates without
+`gh`. It saves
 repository and datasource caches between successful runs using fresh cache keys,
 following the [action's caching guidance][cache]. Upstream versions still come
 from their normal Renovate datasources; no private dependency database is needed.
@@ -57,3 +62,5 @@ Local `update-all` and the package update scripts remain available.
 [free]: https://docs.renovatebot.com/mend-hosted/faq/#community-free-users
 [nix]: https://docs.renovatebot.com/modules/manager/nix/
 [cache]: https://github.com/renovatebot/github-action#persisting-the-repository-cache
+[binary-source]: https://docs.renovatebot.com/self-hosted-configuration/#binarysource
+[install-tools]: https://docs.renovatebot.com/configuration-options/#postupgradetasksinstalltools
