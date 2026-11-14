@@ -96,21 +96,17 @@
       "depNameTemplate": "Homebrew/brew",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^\\.github/workflows/renovate\\.yml$/"
-      ],
-      "matchStrings": [
-        "renovate-version: (?<currentValue>\\d+\\.\\d+\\.\\d+)-full"
-      ],
-      "depNameTemplate": "renovatebot/renovate",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "semver"
     }
   ],
   "packageRules": [
+    {
+      "matchDepNames": [
+        "renovatebot/github-action",
+        "ghcr.io/renovatebot/renovate"
+      ],
+      "groupName": "Renovate",
+      "separateMajorMinor": false
+    },
     {
       "matchManagers": [
         "nix"

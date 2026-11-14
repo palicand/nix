@@ -40,6 +40,11 @@ bot for this repository. The Actions runner overrides it through its global
   allowlist accepts only the three scripts with numeric versions and the two
   named flake updates.
 - GitHub Actions and the Renovate image version are also maintained by Renovate.
+  The action launches the container; `renovate-version` selects the Renovate
+  version inside it. Updates to both pins [share one PR][grouping], including
+  major updates. Their version numbers are independent.
+  The [GitHub Actions manager][github-actions] tracks the image input directly;
+  no custom regex manager is needed for it.
 
 The runner uses the full Renovate image for Nix and supporting tools, with
 [`binarySource: 'install'`][binary-source] so post-upgrade tasks can install
@@ -58,6 +63,8 @@ availability depends on upstream metadata.
 Local `update-all` and the package update scripts remain available.
 
 [action]: https://github.com/renovatebot/github-action
+[grouping]: https://docs.renovatebot.com/configuration-options/#groupname
+[github-actions]: https://docs.renovatebot.com/modules/manager/github-actions/#updating-with-values-in-github-actions
 [token]: https://github.com/renovatebot/github-action#token
 [free]: https://docs.renovatebot.com/mend-hosted/faq/#community-free-users
 [nix]: https://docs.renovatebot.com/modules/manager/nix/
