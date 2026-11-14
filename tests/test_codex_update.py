@@ -85,6 +85,11 @@ exit "${GH_EXIT:-0}"
     def test_latest_release_uses_published_digests_without_downloading(self):
         self.assert_updated(self.run_update(), "latest")
 
+    @unittest.skipUnless(shutil.which("mawk"), "mawk is not installed")
+    def test_release_updates_with_mawk(self):
+        (self.bin / "awk").symlink_to(shutil.which("mawk"))
+        self.assert_updated(self.run_update(), "latest")
+
     def test_explicit_version_formats_use_the_requested_release(self):
         for version in ("0.999.0", "v0.999.0", "rust-v0.999.0"):
             with self.subTest(version=version):

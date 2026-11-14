@@ -42,8 +42,9 @@ bot for this repository. The Actions runner overrides it through its global
 - GitHub Actions and the Renovate image version are also maintained by Renovate.
 
 The runner uses the full Renovate image for Nix and supporting tools, with
-[`binarySource: 'install'`][binary-source] so post-upgrade tasks can install
-declared tools such as `gh`. The full image defaults to `global`, which
+[`RENOVATE_BINARY_SOURCE: install`][binary-source] in the workflow environment so
+post-upgrade tasks can install declared tools such as `gh`. The full image sets
+the environment default to `global`, overriding file configuration, which
 [ignores `installTools`][install-tools] and leaves Codex checksum updates without
 `gh`. It saves
 repository and datasource caches between successful runs using fresh cache keys,
