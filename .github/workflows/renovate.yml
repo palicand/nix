@@ -52,7 +52,7 @@ jobs:
         with:
           configurationFile: .github/renovate-config.cjs
           token: ${{ secrets.RENOVATE_TOKEN }}
-          renovate-version: 44.239.0-full
+          renovate-version: 44.239.1-full
           additional-env-list: GITHUB_REPOSITORY
         env:
           RENOVATE_BINARY_SOURCE: install
