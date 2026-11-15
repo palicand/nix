@@ -257,7 +257,7 @@
       wget
       yadm
       bandwhich
-      postgresql_14
+      inputs.nixpkgs-postgresql14.legacyPackages.${pkgs.stdenv.hostPlatform.system}.postgresql_14
       gawk
       rsync
       tree
