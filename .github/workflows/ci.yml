@@ -13,8 +13,23 @@ jobs:
   lint:
     name: Lint (nixfmt, statix, deadnix, flake check)
     runs-on: ubuntu-latest
+    outputs:
+      flake-changed: ${{ steps.changes.outputs.changed }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check flake changes
+        if: github.event_name == 'pull_request'
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if ! git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- flake.nix flake.lock; then
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Script tests
         run: python3 -m unittest discover -s tests -p 'test_*.py'
@@ -26,6 +41,8 @@ jobs:
             experimental-features = nix-command flakes
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
+        with:
+          use-flakehub: disabled
 
       - name: nixfmt --check
         run: |
@@ -60,41 +77,33 @@ jobs:
             experimental-features = nix-command flakes
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
+        with:
+          use-flakehub: disabled
 
       - name: Build system closure
         run: nix build .#checks.aarch64-darwin.darwin --print-build-logs
 
   package-changes:
     name: System package changes (mac-2026)
-    if: github.event_name == 'pull_request'
+    needs: lint
+    if: github.event_name == 'pull_request' && needs.lint.outputs.flake-changed == 'true'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Check flake changes
-        id: changes
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if ! git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- flake.nix flake.lock; then
-            echo 'changed=true' >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Install Nix
-        if: steps.changes.outputs.changed == 'true'
         uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
             experimental-features = nix-command flakes
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
-        if: steps.changes.outputs.changed == 'true'
+        with:
+          use-flakehub: disabled
 
       - name: Compare system closures
-        if: steps.changes.outputs.changed == 'true'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}

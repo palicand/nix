@@ -30,6 +30,9 @@ bot for this repository. The Actions runner overrides it through its global
 
 - The opt-in [Nix manager][nix] maintains the root and all three package flake
   locks weekly, before 09:00 Monday in Europe/Prague.
+- The PostgreSQL 14 compatibility snapshot, `nixpkgs-postgresql14`, is
+  [excluded from dependency updates][ignore-deps] so it keeps providing
+  PostgreSQL 14 after its removal from unstable.
 - Custom regex managers advance herdr and Homebrew release pins, then update
   their corresponding root lock entries. The Nix manager ignores these two
   inputs to avoid competing updates.
@@ -69,6 +72,7 @@ Local `update-all` and the package update scripts remain available.
 [token]: https://github.com/renovatebot/github-action#token
 [free]: https://docs.renovatebot.com/mend-hosted/faq/#community-free-users
 [nix]: https://docs.renovatebot.com/modules/manager/nix/
+[ignore-deps]: https://docs.renovatebot.com/configuration-options/#ignoredeps
 [cache]: https://github.com/renovatebot/github-action#persisting-the-repository-cache
 [binary-source]: https://docs.renovatebot.com/self-hosted-configuration/#binarysource
 [install-tools]: https://docs.renovatebot.com/configuration-options/#postupgradetasksinstalltools

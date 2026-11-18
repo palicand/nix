@@ -17,6 +17,9 @@
   "nix": {
     "enabled": true
   },
+  "ignoreDeps": [
+    "nixpkgs-postgresql14"
+  ],
   "automerge": false,
   "rebaseWhen": "behind-base-branch",
   "lockFileMaintenance": {
