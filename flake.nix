@@ -6,7 +6,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     # Keep PostgreSQL 14 available after its removal from unstable.
-    nixpkgs-postgresql14.url = "github:NixOS/nixpkgs/2074cc672349f14240fb7ea90d509e0b643e9dd4";
+    nixpkgs-postgresql14.url = "github:NixOS/nixpkgs/f9e03ef8562c6b2aa7dd4961fcd71997874cfbe1";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
