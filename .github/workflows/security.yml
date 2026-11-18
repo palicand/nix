@@ -25,6 +25,8 @@ jobs:
             experimental-features = nix-command flakes
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
+        with:
+          use-flakehub: disabled
 
       - name: Build system closure
         run: nix build .#checks.aarch64-darwin.darwin --print-build-logs
@@ -33,19 +35,19 @@ jobs:
         id: scan
         run: |
           set -o pipefail
-          WHITELIST_ARG=""
+          WHITELIST_ARGS=()
           if [ -f vulnix.toml ]; then
-            WHITELIST_ARG="-w vulnix.toml"
+            WHITELIST_ARGS=(-w vulnix.toml)
           fi
           # vulnix exits 2 when vulnerabilities are found — capture instead of failing.
           set +e
-          nix shell nixpkgs#vulnix -c vulnix $WHITELIST_ARG --json -C ./result \
+          nix shell nixpkgs#vulnix -c vulnix "${WHITELIST_ARGS[@]}" --json -C ./result \
             > vulnix.json
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
           set -e
 
           # Human-readable summary
-          nix shell nixpkgs#vulnix -c vulnix $WHITELIST_ARG -C ./result \
+          nix shell nixpkgs#vulnix -c vulnix "${WHITELIST_ARGS[@]}" -C ./result \
             > vulnix.txt 2>&1 || true
 
       - name: Upload reports
