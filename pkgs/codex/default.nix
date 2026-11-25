@@ -5,26 +5,26 @@
 }:
 
 let
-  version = "0.171.0";
+  version = "0.172.0";
   tag = "rust-v${version}";
   baseUrl = "https://github.com/openai/codex/releases/download/${tag}";
 
   sources = {
     aarch64-darwin = {
       url = "${baseUrl}/codex-package-aarch64-apple-darwin.tar.gz";
-      sha256 = "58c88032ec446e72922d911d8f03773102da20c16a6059cf21f6744bce57f210";
+      sha256 = "0970016d48209a09c4039139629ed79b4a31c5e3d864e792c043419d98fa6466";
     };
     x86_64-darwin = {
       url = "${baseUrl}/codex-package-x86_64-apple-darwin.tar.gz";
-      sha256 = "dd130ea3217b4e6fe4454c99949e0b28e2e8a9ad8da8c3a75f0c7265fab7153b";
+      sha256 = "b5e94828f45171f13d81de2b96cae05c0b7e6a7f2f7d3c9d4e748be3d3906c02";
     };
     aarch64-linux = {
       url = "${baseUrl}/codex-package-aarch64-unknown-linux-musl.tar.gz";
-      sha256 = "d8c43bee6cf11b01eb18b95f4d7961092bc40228180808859e70dabb7784c1c9";
+      sha256 = "faf17b8071927f33346a805dc8cb45de4e08c0d75cf0e5e68cecddca28b8861e";
     };
     x86_64-linux = {
       url = "${baseUrl}/codex-package-x86_64-unknown-linux-musl.tar.gz";
-      sha256 = "8391d67757496bfd14893eca6cbf0c96994bf2627566ff1f018f70600c9ef6b3";
+      sha256 = "63e3b00065ed7f62166d0522e17f663cb866a31d80d03e63365482ed34a1d991";
     };
   };
 
