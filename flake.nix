@@ -24,7 +24,7 @@
 
     # Override nix-homebrew's lagging release; update-all advances this stable pin.
     brew-src = {
-      url = "github:Homebrew/brew/7.0.16";
+      url = "github:Homebrew/brew/7.0.17";
       flake = false;
     };
 
